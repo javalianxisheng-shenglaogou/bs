@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>前端功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #409eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #66b1ff;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f0f9ff;
+            border: 1px solid #b3d8ff;
+        }
+        .error {
+            background: #fef0f0;
+            border-color: #fbc4c4;
+            color: #f56c6c;
+        }
+        .success {
+            background: #f0f9ff;
+            border-color: #b3d8ff;
+            color: #67c23a;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 多站点CMS前端功能测试</h1>
+    
+    <div class="test-section">
+        <h2>📱 前端应用状态检查</h2>
+        <button class="test-button" onclick="checkFrontendStatus()">检查前端状态</button>
+        <div id="frontend-status" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 后端API连接测试</h2>
+        <button class="test-button" onclick="testBackendConnection()">测试后端连接</button>
+        <div id="backend-status" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>👤 用户注册测试</h2>
+        <div>
+            <input type="text" id="reg-username" placeholder="用户名" value="testuser2">
+            <input type="email" id="reg-email" placeholder="邮箱" value="test2@example.com">
+            <input type="password" id="reg-password" placeholder="密码" value="password123">
+            <input type="text" id="reg-nickname" placeholder="昵称" value="测试用户2">
+        </div>
+        <button class="test-button" onclick="testRegister()">测试注册</button>
+        <div id="register-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔐 用户登录测试</h2>
+        <div>
+            <input type="text" id="login-username" placeholder="用户名或邮箱" value="testuser">
+            <input type="password" id="login-password" placeholder="密码" value="password123">
+        </div>
+        <button class="test-button" onclick="testLogin()">测试登录</button>
+        <div id="login-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🏠 前端页面导航测试</h2>
+        <button class="test-button" onclick="openFrontend()">打开前端应用</button>
+        <button class="test-button" onclick="openSwagger()">打开API文档</button>
+        <div id="navigation-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        const FRONTEND_BASE = 'http://localhost:3001';
+
+        function showResult(elementId, message, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = message;
+            element.className = isError ? 'result error' : 'result success';
+        }
+
+        function checkFrontendStatus() {
+            fetch(FRONTEND_BASE)
+                .then(response => {
+                    if (response.ok) {
+                        showResult('frontend-status', '✅ 前端应用运行正常！端口: 3001');
+                    } else {
+                        showResult('frontend-status', '❌ 前端应用响应异常', true);
+                    }
+                })
+                .catch(error => {
+                    showResult('frontend-status', `❌ 前端应用无法访问: ${error.message}`, true);
+                });
+        }
+
+        function testBackendConnection() {
+            fetch(`${API_BASE}/actuator/health`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'UP') {
+                        showResult('backend-status', '✅ 后端API连接正常！状态: UP');
+                    } else {
+                        showResult('backend-status', `❌ 后端API状态异常: ${data.status}`, true);
+                    }
+                })
+                .catch(error => {
+                    showResult('backend-status', `❌ 后端API连接失败: ${error.message}`, true);
+                });
+        }
+
+        function testRegister() {
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const nickname = document.getElementById('reg-nickname').value;
+
+            fetch(`${API_BASE}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username,
+                    email,
+                    password,
+                    confirmPassword: password,
+                    nickname
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResult('register-result', `✅ 注册成功！用户ID: ${data.data.user.id}, 用户名: ${data.data.user.username}`);
+                } else {
+                    showResult('register-result', `❌ 注册失败: ${data.message}`, true);
+                }
+            })
+            .catch(error => {
+                showResult('register-result', `❌ 注册请求失败: ${error.message}`, true);
+            });
+        }
+
+        function testLogin() {
+            const usernameOrEmail = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+
+            fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    usernameOrEmail,
+                    password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showResult('login-result', `✅ 登录成功！用户: ${data.data.user.username}, 令牌已获取`);
+                    // 保存令牌到localStorage以便前端使用
+                    localStorage.setItem('token', data.data.accessToken);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                } else {
+                    showResult('login-result', `❌ 登录失败: ${data.message}`, true);
+                }
+            })
+            .catch(error => {
+                showResult('login-result', `❌ 登录请求失败: ${error.message}`, true);
+            });
+        }
+
+        function openFrontend() {
+            window.open(FRONTEND_BASE, '_blank');
+            showResult('navigation-result', '✅ 已打开前端应用页面');
+        }
+
+        function openSwagger() {
+            window.open(`${API_BASE}/swagger-ui.html`, '_blank');
+            showResult('navigation-result', '✅ 已打开API文档页面');
+        }
+
+        // 页面加载时自动检查状态
+        window.onload = function() {
+            checkFrontendStatus();
+            testBackendConnection();
+        };
+    </script>
+</body>
+</html>

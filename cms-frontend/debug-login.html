@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #409eff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #66b1ff;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #f0f9ff;
+            border: 1px solid #409eff;
+            color: #409eff;
+        }
+        .error {
+            background-color: #fef0f0;
+            border: 1px solid #f56c6c;
+            color: #f56c6c;
+        }
+        .info {
+            background-color: #f4f4f5;
+            border: 1px solid #909399;
+            color: #606266;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 前端登录调试工具</h1>
+        
+        <div class="form-group">
+            <label for="username">用户名或邮箱:</label>
+            <input type="text" id="username" value="admin" />
+        </div>
+        
+        <div class="form-group">
+            <label for="password">密码:</label>
+            <input type="password" id="password" value="password" />
+        </div>
+        
+        <button onclick="testDirectAPI()">测试直接API调用</button>
+        <button onclick="testProxyAPI()">测试代理API调用</button>
+        <button onclick="testFrontendLogin()">测试前端登录流程</button>
+        <button onclick="clearResults()">清除结果</button>
+        
+        <div id="result" class="result info">点击按钮开始测试...</div>
+    </div>
+
+    <script>
+        function showResult(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = message;
+            resultDiv.className = `result ${type}`;
+        }
+
+        async function testDirectAPI() {
+            showResult('🔄 测试直接API调用...', 'info');
+            
+            const loginData = {
+                usernameOrEmail: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showResult(`✅ 直接API调用成功！
+响应状态: ${response.status}
+用户信息: ${data.data.user.username} - ${data.data.user.email}
+访问令牌: ${data.data.accessToken.substring(0, 50)}...
+刷新令牌: ${data.data.refreshToken.substring(0, 50)}...`, 'success');
+                } else {
+                    showResult(`❌ 直接API调用失败！
+响应状态: ${response.status}
+错误信息: ${data.message || '未知错误'}
+完整响应: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ 直接API调用异常！
+错误信息: ${error.message}
+错误详情: ${error.stack}`, 'error');
+            }
+        }
+
+        async function testProxyAPI() {
+            showResult('🔄 测试代理API调用...', 'info');
+            
+            const loginData = {
+                usernameOrEmail: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData)
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showResult(`✅ 代理API调用成功！
+响应状态: ${response.status}
+用户信息: ${data.data.user.username} - ${data.data.user.email}
+访问令牌: ${data.data.accessToken.substring(0, 50)}...
+刷新令牌: ${data.data.refreshToken.substring(0, 50)}...`, 'success');
+                } else {
+                    showResult(`❌ 代理API调用失败！
+响应状态: ${response.status}
+错误信息: ${data.message || '未知错误'}
+完整响应: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult(`❌ 代理API调用异常！
+错误信息: ${error.message}
+错误详情: ${error.stack}`, 'error');
+            }
+        }
+
+        async function testFrontendLogin() {
+            showResult('🔄 测试前端登录流程...', 'info');
+            
+            try {
+                // 模拟前端登录流程
+                const loginData = {
+                    usernameOrEmail: document.getElementById('username').value,
+                    password: document.getElementById('password').value
+                };
+
+                // 1. 调用登录API
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(loginData)
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok || !data.success) {
+                    throw new Error(`登录失败: ${data.message || '未知错误'}`);
+                }
+
+                // 2. 保存令牌到localStorage
+                localStorage.setItem('token', data.data.accessToken);
+                localStorage.setItem('refreshToken', data.data.refreshToken);
+                localStorage.setItem('user', JSON.stringify(data.data.user));
+
+                // 3. 测试受保护的API
+                const profileResponse = await fetch('/api/auth/me', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${data.data.accessToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const profileData = await profileResponse.json();
+
+                if (profileResponse.ok && profileData.success) {
+                    const roles = profileData.data.roles || [];
+                    const roleNames = Array.isArray(roles) ? roles.join(', ') : '无角色信息';
+
+                    showResult(`✅ 前端登录流程测试成功！
+1. 登录API调用成功
+2. 令牌已保存到localStorage
+3. 受保护API调用成功
+用户信息: ${profileData.data.username} - ${profileData.data.email}
+角色: ${roleNames}
+是否超级管理员: ${profileData.data.isSuperAdmin ? '是' : '否'}
+
+现在可以尝试在前端应用中登录了！`, 'success');
+                } else {
+                    showResult(`⚠️ 登录成功但受保护API调用失败！
+登录成功，令牌已保存
+但无法访问受保护的API
+错误信息: ${profileData.message || '未知错误'}`, 'error');
+                }
+
+            } catch (error) {
+                showResult(`❌ 前端登录流程测试失败！
+错误信息: ${error.message}
+错误详情: ${error.stack}`, 'error');
+            }
+        }
+
+        function clearResults() {
+            showResult('点击按钮开始测试...', 'info');
+        }
+
+        // 页面加载时显示当前状态
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+
+            if (token && user) {
+                try {
+                    const userData = JSON.parse(user);
+                    showResult(`📋 当前登录状态:
+已登录用户: ${userData.username} - ${userData.email}
+令牌存在: 是
+令牌长度: ${token.length} 字符
+
+可以直接测试受保护的API或重新登录`, 'info');
+                } catch (e) {
+                    showResult(`⚠️ 存储的用户数据格式错误，请重新登录`, 'error');
+                    localStorage.clear();
+                }
+            } else {
+                showResult(`🔓 当前未登录状态
+请使用测试按钮进行登录测试`, 'info');
+            }
+        };
+    </script>
+</body>
+</html>

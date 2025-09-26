@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>认证修复工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .btn {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        .btn.danger {
+            background: #f44336;
+        }
+        .btn.danger:hover {
+            background: #da190b;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.3);
+        }
+        .info {
+            background: rgba(33, 150, 243, 0.3);
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 CMS认证修复工具</h1>
+        <p>解决JWT令牌验证失败和403权限错误问题</p>
+
+        <div class="status" id="status">
+            <h3>当前状态</h3>
+            <p id="tokenStatus">检查中...</p>
+            <p id="userStatus">检查中...</p>
+        </div>
+
+        <div>
+            <h3>🛠️ 修复操作</h3>
+            <button class="btn danger" onclick="clearAllAuth()">清除所有认证信息</button>
+            <button class="btn" onclick="testSuperAdminLogin()">测试超级管理员登录</button>
+            <button class="btn" onclick="checkBackendStatus()">检查后端状态</button>
+            <button class="btn" onclick="goToLogin()">前往登录页面</button>
+        </div>
+
+        <div class="status" id="results">
+            <h3>📋 操作结果</h3>
+            <pre id="resultText">等待操作...</pre>
+        </div>
+
+        <div class="status info">
+            <h3>📖 使用说明</h3>
+            <ol>
+                <li><strong>清除所有认证信息</strong>：删除localStorage中的所有令牌和用户信息</li>
+                <li><strong>测试超级管理员登录</strong>：使用superadmin/admin123测试登录</li>
+                <li><strong>检查后端状态</strong>：验证后端API是否正常运行</li>
+                <li><strong>前往登录页面</strong>：跳转到登录页面重新登录</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // 检查当前认证状态
+        function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            document.getElementById('tokenStatus').textContent = 
+                `Token: ${token ? '存在 (长度: ' + token.length + ')' : '不存在'}`;
+            
+            if (user) {
+                try {
+                    const userData = JSON.parse(user);
+                    document.getElementById('userStatus').textContent = 
+                        `用户: ${userData.username} (${userData.roles?.join(', ') || '无角色'})`;
+                } catch (e) {
+                    document.getElementById('userStatus').textContent = '用户数据格式错误';
+                }
+            } else {
+                document.getElementById('userStatus').textContent = '用户: 未登录';
+            }
+        }
+
+        // 清除所有认证信息
+        function clearAllAuth() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            
+            updateResult('✅ 已清除所有认证信息\n- Token已删除\n- RefreshToken已删除\n- 用户信息已删除', 'success');
+            checkAuthStatus();
+        }
+
+        // 测试超级管理员登录
+        async function testSuperAdminLogin() {
+            updateResult('🔄 正在测试超级管理员登录...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        usernameOrEmail: 'superadmin',
+                        password: 'admin123'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // 保存新的认证信息
+                    localStorage.setItem('token', data.data.accessToken);
+                    localStorage.setItem('refreshToken', data.data.refreshToken);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                    
+                    updateResult(`✅ 超级管理员登录成功！
+用户名: ${data.data.user.username}
+角色: ${data.data.user.roles.join(', ')}
+Token已保存到localStorage`, 'success');
+                    checkAuthStatus();
+                } else {
+                    updateResult(`❌ 登录失败: ${data.message || '未知错误'}`, 'error');
+                }
+            } catch (error) {
+                updateResult(`❌ 登录请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 检查后端状态
+        async function checkBackendStatus() {
+            updateResult('🔄 正在检查后端状态...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/actuator/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateResult(`✅ 后端状态正常
+状态: ${data.status}
+详情: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    updateResult(`⚠️ 后端状态异常: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                updateResult(`❌ 无法连接到后端: ${error.message}`, 'error');
+            }
+        }
+
+        // 前往登录页面
+        function goToLogin() {
+            window.location.href = '/login';
+        }
+
+        // 更新结果显示
+        function updateResult(text, type) {
+            const resultElement = document.getElementById('resultText');
+            const statusElement = document.getElementById('results');
+            
+            resultElement.textContent = text;
+            statusElement.className = 'status ' + type;
+        }
+
+        // 页面加载时检查状态
+        window.onload = function() {
+            checkAuthStatus();
+        };
+    </script>
+</body>
+</html>

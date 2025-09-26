@@ -1,0 +1,5 @@
+{
+    "java.compile.nullAnalysis.mode": "automatic",
+    "problems.showCurrentInStatus": true,
+    "problems.defaultViewMode": "tree"
+}

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dashboard API 测试</h1>
+    
+    <div class="test-section">
+        <h3>1. 登录测试</h3>
+        <button onclick="testLogin()">测试登录</button>
+        <div id="login-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. 获取站点列表</h3>
+        <button onclick="testGetSites()">获取站点</button>
+        <div id="sites-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. 获取内容统计</h3>
+        <button onclick="testGetContentStats()">获取内容统计</button>
+        <div id="content-stats-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. 获取最近内容</h3>
+        <button onclick="testGetRecentContents()">获取最近内容</button>
+        <div id="recent-contents-result"></div>
+    </div>
+
+    <script>
+        let authToken = '';
+        let currentSiteId = null;
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        usernameOrEmail: 'superadmin',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.data.accessToken;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>登录成功</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>登录失败</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>请求失败</h4>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testGetSites() {
+            const resultDiv = document.getElementById('sites-result');
+            if (!authToken) {
+                resultDiv.innerHTML = '<div class="error">请先登录</div>';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/sites?page=1&size=10', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.data.content.length > 0) {
+                    currentSiteId = data.data.content[0].id;
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>获取站点成功</h4>
+                            <p>当前站点ID: ${currentSiteId}</p>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>获取站点失败</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>请求失败</h4>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testGetContentStats() {
+            const resultDiv = document.getElementById('content-stats-result');
+            if (!authToken) {
+                resultDiv.innerHTML = '<div class="error">请先登录</div>';
+                return;
+            }
+            if (!currentSiteId) {
+                resultDiv.innerHTML = '<div class="error">请先获取站点信息</div>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/contents/stats?siteId=${currentSiteId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>获取内容统计成功</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>获取内容统计失败</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>请求失败</h4>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        async function testGetRecentContents() {
+            const resultDiv = document.getElementById('recent-contents-result');
+            if (!authToken) {
+                resultDiv.innerHTML = '<div class="error">请先登录</div>';
+                return;
+            }
+            if (!currentSiteId) {
+                resultDiv.innerHTML = '<div class="error">请先获取站点信息</div>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/contents?page=1&size=5&sort=updatedAt&direction=desc&siteId=${currentSiteId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>获取最近内容成功</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>获取最近内容失败</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>请求失败</h4>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速测试 - 多站点CMS</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #409eff;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #409eff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #66b1ff;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .success {
+            background: #f0f9ff;
+            border: 1px solid #b3d8ff;
+            color: #67c23a;
+        }
+        .error {
+            background: #fef0f0;
+            border: 1px solid #fbc4c4;
+            color: #f56c6c;
+        }
+        .info {
+            background: #f4f4f5;
+            border: 1px solid #e9e9eb;
+            color: #909399;
+        }
+        .accounts {
+            background: #fff7e6;
+            border: 1px solid #ffd591;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .accounts h4 {
+            margin: 0 0 10px 0;
+            color: #fa8c16;
+        }
+        .account-item {
+            margin: 5px 0;
+            font-family: monospace;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 多站点CMS快速测试</h1>
+        
+        <div class="accounts">
+            <h4>📋 可用测试账号</h4>
+            <div class="account-item">用户名: <strong>testuser</strong> | 密码: <strong>password123</strong></div>
+            <div class="account-item">用户名: <strong>newuser</strong> | 密码: <strong>password123</strong></div>
+        </div>
+
+        <div class="section">
+            <h3>🔐 用户注册测试</h3>
+            <input type="text" id="reg-username" placeholder="用户名 (例如: user123)" value="">
+            <input type="email" id="reg-email" placeholder="邮箱 (例如: user123@example.com)" value="">
+            <input type="password" id="reg-password" placeholder="密码 (至少6位)" value="password123">
+            <input type="password" id="reg-confirm" placeholder="确认密码" value="password123">
+            <input type="text" id="reg-nickname" placeholder="昵称 (例如: 测试用户)" value="">
+            <button onclick="testRegister()">测试注册</button>
+            <div id="register-result" class="result info">请填写信息后点击测试注册</div>
+        </div>
+
+        <div class="section">
+            <h3>🔑 用户登录测试</h3>
+            <input type="text" id="login-username" placeholder="用户名或邮箱" value="testuser">
+            <input type="password" id="login-password" placeholder="密码" value="password123">
+            <button onclick="testLogin()">测试登录</button>
+            <div id="login-result" class="result info">使用上面的测试账号进行登录</div>
+        </div>
+
+        <div class="section">
+            <h3>🌐 前端应用访问</h3>
+            <button onclick="openFrontend()">打开前端应用</button>
+            <button onclick="openSwagger()">打开API文档</button>
+            <div id="frontend-result" class="result info">点击按钮打开相应页面</div>
+        </div>
+
+        <div class="section">
+            <h3>📊 系统状态</h3>
+            <button onclick="checkStatus()">检查系统状态</button>
+            <div id="status-result" class="result info">点击检查系统运行状态</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        const FRONTEND_BASE = 'http://localhost:3001';
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = message;
+            element.className = `result ${type}`;
+        }
+
+        async function testRegister() {
+            const username = document.getElementById('reg-username').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const confirmPassword = document.getElementById('reg-confirm').value;
+            const nickname = document.getElementById('reg-nickname').value.trim();
+
+            if (!username || !email || !password || !confirmPassword || !nickname) {
+                showResult('register-result', '❌ 请填写完整的注册信息', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showResult('register-result', '❌ 两次输入的密码不一致', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showResult('register-result', '❌ 密码长度不能少于6位', 'error');
+                return;
+            }
+
+            try {
+                showResult('register-result', '⏳ 正在注册...', 'info');
+                
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        email,
+                        password,
+                        confirmPassword,
+                        nickname
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('register-result', `✅ 注册成功！用户: ${data.data.user.username} (${data.data.user.email})`, 'success');
+                    // 自动填充到登录表单
+                    document.getElementById('login-username').value = username;
+                    document.getElementById('login-password').value = password;
+                } else {
+                    showResult('register-result', `❌ 注册失败: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('register-result', `❌ 网络错误: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogin() {
+            const usernameOrEmail = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            if (!usernameOrEmail || !password) {
+                showResult('login-result', '❌ 请输入用户名和密码', 'error');
+                return;
+            }
+
+            try {
+                showResult('login-result', '⏳ 正在登录...', 'info');
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        usernameOrEmail,
+                        password
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult('login-result', `✅ 登录成功！欢迎 ${data.data.user.nickname} (${data.data.user.username})`, 'success');
+                    // 保存令牌
+                    localStorage.setItem('token', data.data.accessToken);
+                    localStorage.setItem('user', JSON.stringify(data.data.user));
+                } else {
+                    showResult('login-result', `❌ 登录失败: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('login-result', `❌ 网络错误: ${error.message}`, 'error');
+            }
+        }
+
+        function openFrontend() {
+            window.open(FRONTEND_BASE, '_blank');
+            showResult('frontend-result', '✅ 已打开前端应用页面', 'success');
+        }
+
+        function openSwagger() {
+            window.open(`${API_BASE}/swagger-ui.html`, '_blank');
+            showResult('frontend-result', '✅ 已打开API文档页面', 'success');
+        }
+
+        async function checkStatus() {
+            try {
+                showResult('status-result', '⏳ 检查中...', 'info');
+                
+                // 检查后端
+                const backendResponse = await fetch(`${API_BASE}/actuator/health`);
+                const backendData = await backendResponse.json();
+                
+                // 检查前端
+                const frontendResponse = await fetch(FRONTEND_BASE);
+                
+                let statusMessage = '';
+                if (backendData.status === 'UP' && frontendResponse.ok) {
+                    statusMessage = '✅ 系统运行正常！前端和后端都可以访问';
+                } else if (backendData.status === 'UP') {
+                    statusMessage = '⚠️ 后端正常，前端可能有问题';
+                } else if (frontendResponse.ok) {
+                    statusMessage = '⚠️ 前端正常，后端可能有问题';
+                } else {
+                    statusMessage = '❌ 前端和后端都有问题';
+                }
+                
+                showResult('status-result', statusMessage, backendData.status === 'UP' && frontendResponse.ok ? 'success' : 'error');
+                
+            } catch (error) {
+                showResult('status-result', `❌ 检查失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时自动检查状态
+        window.onload = function() {
+            checkStatus();
+            
+            // 生成随机用户名
+            const randomNum = Math.floor(Math.random() * 1000);
+            document.getElementById('reg-username').value = `user${randomNum}`;
+            document.getElementById('reg-email').value = `user${randomNum}@example.com`;
+            document.getElementById('reg-nickname').value = `测试用户${randomNum}`;
+        };
+    </script>
+</body>
+</html>
