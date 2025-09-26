@@ -7,6 +7,7 @@ import com.multisite.cms.dto.category.CategoryResponse;
 import com.multisite.cms.dto.category.CategoryUpdateRequest;
 import com.multisite.cms.entity.ContentCategory;
 import com.multisite.cms.entity.Site;
+import com.multisite.cms.entity.User;
 import com.multisite.cms.service.ContentCategoryService;
 import com.multisite.cms.service.SiteService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -181,7 +183,7 @@ public class ContentCategoryController {
         
         log.info("Creating category: {}", request.getName());
         
-        String currentUser = authentication.getName();
+        Long currentUserId = Long.valueOf(authentication.getName());
         
         // 验证站点是否存在
         Site site = siteService.getSiteById(request.getSiteId())
@@ -204,7 +206,7 @@ public class ContentCategoryController {
                 .sortOrder(request.getSortOrder())
                 .build();
         
-        ContentCategory savedCategory = contentCategoryService.createCategory(category, currentUser);
+        ContentCategory savedCategory = contentCategoryService.createCategory(category, currentUserId);
         CategoryResponse response = CategoryResponse.from(savedCategory);
         
         return ApiResponse.success("创建成功", response);
@@ -223,7 +225,7 @@ public class ContentCategoryController {
         
         log.info("Updating category: {}", id);
         
-        String currentUser = authentication.getName();
+        Long currentUserId = Long.valueOf(authentication.getName());
         
         // 验证父分类是否存在（如果提供了父分类ID）
         ContentCategory parentCategory = null;
@@ -241,7 +243,7 @@ public class ContentCategoryController {
                 .sortOrder(request.getSortOrder())
                 .build();
         
-        ContentCategory savedCategory = contentCategoryService.updateCategory(id, updateCategory, currentUser);
+        ContentCategory savedCategory = contentCategoryService.updateCategory(id, updateCategory, currentUserId);
         CategoryResponse response = CategoryResponse.from(savedCategory);
         
         return ApiResponse.success("更新成功", response);
@@ -251,36 +253,36 @@ public class ContentCategoryController {
      * 删除分类
      */
     @DeleteMapping("/{id}")
-    @Operation(summary = "删除分类", description = "删除指定ID的分类（软删除）")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('SITE_ADMIN') or hasRole('EDITOR')")
+    @Operation(summary = "删除分类", description = "删除指定ID的分类")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('SITE_ADMIN')")
     public ApiResponse<Void> deleteCategory(
             @Parameter(description = "分类ID", required = true) @PathVariable Long id,
             Authentication authentication) {
-        
+
         log.info("Deleting category: {}", id);
-        
-        String currentUser = authentication.getName();
-        contentCategoryService.deleteCategory(id, currentUser);
-        
+
+        Long currentUserId = Long.valueOf(authentication.getName());
+        contentCategoryService.deleteCategory(id, currentUserId);
+
         return ApiResponse.success("删除成功");
     }
 
     /**
      * 批量删除分类
      */
-    @DeleteMapping("/batch")
-    @Operation(summary = "批量删除分类", description = "批量删除多个分类（软删除）")
-    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('SITE_ADMIN') or hasRole('EDITOR')")
+    @DeleteMapping
+    @Operation(summary = "批量删除分类", description = "批量删除指定ID列表的分类")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('SITE_ADMIN')")
     public ApiResponse<Void> deleteCategories(
-            @Parameter(description = "分类ID列表", required = true) @RequestBody List<Long> categoryIds,
+            @Parameter(description = "分类ID列表", required = true) @RequestBody List<Long> ids,
             Authentication authentication) {
-        
-        log.info("Batch deleting categories: {}", categoryIds);
-        
-        String currentUser = authentication.getName();
-        contentCategoryService.deleteCategories(categoryIds, currentUser);
-        
-        return ApiResponse.success("批量删除成功");
+
+        log.info("Deleting categories: {}", ids);
+
+        Long currentUserId = Long.valueOf(authentication.getName());
+        contentCategoryService.deleteCategories(ids, currentUserId);
+
+        return ApiResponse.success("删除成功");
     }
 
     /**

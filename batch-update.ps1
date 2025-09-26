@@ -14,12 +14,17 @@ $loginBody = @{
 } | ConvertTo-Json
 
 try {
-    $loginResponse = Invoke-RestMethod -Uri "$apiBaseUrl/auth/login" -Method POST -Body $loginBody -ContentType "application/json"
-    $token = $loginResponse.data.accessToken
+    $loginResponse = Invoke-WebRequest -Uri "$apiBaseUrl/auth/login" -Method POST -Body $loginBody -ContentType "application/json"
+    $loginResponseContent = $loginResponse.Content | ConvertFrom-Json
+    $token = $loginResponseContent.data.accessToken
     Write-Host "Successfully logged in as ${adminUsername}"
 } catch {
     $errorMessage = $_.Exception.Message
     Write-Host "Failed to log in: ${errorMessage}"
+    if ($_.Exception.Response) {
+        $responseBody = $_.Exception.Response.Content.ReadAsStringAsync().Result
+        Write-Host "Response body: $responseBody"
+    }
     exit
 }
 
@@ -32,12 +37,13 @@ Write-Host "Batch update script started..."
 
 # Delete all content
 try {
-    $contentsResponse = Invoke-RestMethod -Uri "$apiBaseUrl/contents?page=1&size=100" -Method GET -Headers $headers
-    $contentIds = $contentsResponse.data.content | ForEach-Object { $_.id }
+    $contentsResponse = Invoke-WebRequest -Uri "$apiBaseUrl/contents?page=1&size=100" -Method GET -Headers $headers
+    $contentsResponseContent = $contentsResponse.Content | ConvertFrom-Json
+    $contentIds = $contentsResponseContent.data.content | ForEach-Object { $_.id }
     Write-Host "Found $($contentIds.Count) content items to delete"
     foreach ($id in $contentIds) {
         try {
-            Invoke-RestMethod -Uri "$apiBaseUrl/contents/${id}" -Method DELETE -Headers $headers
+            Invoke-WebRequest -Uri "$apiBaseUrl/contents/${id}" -Method DELETE -Headers $headers
             Write-Host "Deleted content with ID: ${id}"
         } catch {
             # Ignore 404 errors if content is already deleted
@@ -54,19 +60,20 @@ try {
 
 # Delete all categories
 try {
-    $categoriesResponse = Invoke-RestMethod -Uri "$apiBaseUrl/categories?page=1&size=100" -Method GET -Headers $headers
-    $categoryIds = $categoriesResponse.data.content | ForEach-Object { $_.id }
+    $categoriesResponse = Invoke-WebRequest -Uri "$apiBaseUrl/categories?page=1&size=100" -Method GET -Headers $headers
+    $categoriesResponseContent = $categoriesResponse.Content | ConvertFrom-Json
+    $categoryIds = $categoriesResponseContent.data.content | ForEach-Object { $_.id }
     Write-Host "Found $($categoryIds.Count) categories to delete"
     foreach ($id in $categoryIds) {
         try {
-            Invoke-RestMethod -Uri "$apiBaseUrl/categories/${id}" -Method DELETE -Headers $headers
+            Invoke-WebRequest -Uri "$apiBaseUrl/categories/${id}" -Method DELETE -Headers $headers
             Write-Host "Deleted category with ID: ${id}"
         } catch {
             if ($_.Exception.Response.StatusCode -ne 404) {
                 $errorMessage = $_.Exception.Message
                 Write-Host "Failed to delete category with ID ${id}: ${errorMessage}"
                 if ($_.Exception.Response) {
-                    $responseStream = $_.Exception.Response.Content.ReadAsStream()
+                    $responseStream = $_.Exception.Response.GetResponseStream()
                     $reader = New-Object System.IO.StreamReader($responseStream)
                     $responseBody = $reader.ReadToEnd()
                     Write-Host "Response body: $responseBody"
@@ -78,7 +85,7 @@ try {
     $errorMessage = $_.Exception.Message
     Write-Host "Failed to get category list: ${errorMessage}"
     if ($_.Exception.Response) {
-        $responseStream = $_.Exception.Response.Content.ReadAsStream()
+        $responseStream = $_.Exception.Response.GetResponseStream()
         $reader = New-Object System.IO.StreamReader($responseStream)
         $responseBody = $reader.ReadToEnd()
         Write-Host "Response body: $responseBody"
@@ -87,12 +94,13 @@ try {
 
 # Delete all sites
 try {
-    $sitesResponse = Invoke-RestMethod -Uri "$apiBaseUrl/sites?page=1&size=100" -Method GET -Headers $headers
-    $siteIds = $sitesResponse.data.content | ForEach-Object { $_.id }
+    $sitesResponse = Invoke-WebRequest -Uri "$apiBaseUrl/sites?page=1&size=100" -Method GET -Headers $headers
+    $sitesResponseContent = $sitesResponse.Content | ConvertFrom-Json
+    $siteIds = $sitesResponseContent.data.content | ForEach-Object { $_.id }
     Write-Host "Found $($siteIds.Count) sites to delete"
     foreach ($id in $siteIds) {
         try {
-            Invoke-RestMethod -Uri "$apiBaseUrl/sites/${id}" -Method DELETE -Headers $headers
+            Invoke-WebRequest -Uri "$apiBaseUrl/sites/${id}" -Method DELETE -Headers $headers
             Write-Host "Deleted site with ID: ${id}"
         } catch {
             if ($_.Exception.Response.StatusCode -ne 404) {
@@ -109,19 +117,41 @@ try {
 
 # Add new sites and capture them
 $sitesToAdd = @(
-    @{ name = "新闻中心"; code = "news"; domain = "news.example.com" },
-    @{ name = "开发者社区"; code = "dev"; domain = "dev.example.com" }
+    @{ name = "主站"; code = "main_site"; domain = "main.example.com" },
+    @{ name = "子站"; code = "sub_site"; domain = "sub.example.com" }
 )
 $createdSites = @()
 foreach ($site in $sitesToAdd) {
     $siteBody = $site | ConvertTo-Json
     try {
-        $newSite = Invoke-RestMethod -Uri "$apiBaseUrl/sites" -Method POST -Headers $headers -Body $siteBody
-        $createdSites += $newSite.data
-        Write-Host "Created site: $($newSite.data.name) (ID: $($newSite.data.id))"
+        $newSiteResponse = Invoke-WebRequest -Uri "$apiBaseUrl/sites" -Method POST -Headers $headers -Body $siteBody -SkipHttpErrorCheck
+        if ($newSiteResponse.StatusCode -ne 200) {
+            Write-Host "Failed to create site $($site.name). Status code: $($newSiteResponse.StatusCode)"
+            Write-Host "Response body: $($newSiteResponse.Content)"
+        } else {
+            $newSite = $newSiteResponse.Content | ConvertFrom-Json
+            $createdSites += $newSite.data
+            Write-Host "Created site: $($newSite.data.name) (ID: $($newSite.data.id))"
+
+            # Create a default root category for the new site
+            $defaultCategory = @{ 
+                name = "默认分类"; 
+                code = "default"; 
+                siteId = $newSite.data.id 
+            }
+            $categoryBody = $defaultCategory | ConvertTo-Json
+            $newCategoryResponse = Invoke-WebRequest -Uri "$apiBaseUrl/categories" -Method POST -Headers $headers -Body $categoryBody -SkipHttpErrorCheck
+            if ($newCategoryResponse.StatusCode -ne 200) {
+                Write-Host "Failed to create default category for site $($newSite.data.name). Status code: $($newCategoryResponse.StatusCode)"
+                Write-Host "Response body: $($newCategoryResponse.Content)"
+            } else {
+                $newCategory = $newCategoryResponse.Content | ConvertFrom-Json
+                Write-Host "Created default category for site: $($newSite.data.name) (ID: $($newCategory.data.id))"
+            }
+        }
     } catch {
         $errorMessage = $_.Exception.Message
-        Write-Host "Failed to create site $($site.name): ${errorMessage}"
+        Write-Host "An unexpected error occurred while creating site $($site.name): ${errorMessage}"
     }
 }
 
@@ -135,15 +165,23 @@ $createdCategories = @()
 for ($i = 0; $i -lt $categoriesToAdd.Count; $i++) {
     $category = $categoriesToAdd[$i]
     $site = $createdSites[$i]
+    Write-Host "Debug: Site object from array: $($site | ConvertTo-Json -Depth 5)"
+    Write-Host "Debug: Site ID from array: $($site.id)"
     $category.siteId = $site.id
     $categoryBody = $category | ConvertTo-Json
     try {
-        $newCategory = Invoke-RestMethod -Uri "$apiBaseUrl/categories" -Method POST -Headers $headers -Body $categoryBody
-        $createdCategories += $newCategory.data
-        Write-Host "Created category: $($newCategory.data.name) (ID: $($newCategory.data.id)) for site $($site.name)"
+        $newCategoryResponse = Invoke-WebRequest -Uri "$apiBaseUrl/categories" -Method POST -Headers $headers -Body $categoryBody -SkipHttpErrorCheck
+        if ($newCategoryResponse.StatusCode -ne 200) {
+            Write-Host "Failed to create category $($category.name). Status code: $($newCategoryResponse.StatusCode)"
+            Write-Host "Response body: $($newCategoryResponse.Content)"
+        } else {
+            $newCategory = $newCategoryResponse.Content | ConvertFrom-Json
+            $createdCategories += $newCategory.data
+            Write-Host "Created category: $($newCategory.data.name) (ID: $($newCategory.data.id)) for site $($site.name)"
+        }
     } catch {
         $errorMessage = $_.Exception.Message
-        Write-Host "Failed to create category $($category.name): ${errorMessage}"
+        Write-Host "An unexpected error occurred while creating category $($category.name): ${errorMessage}"
     }
 }
 
@@ -175,10 +213,16 @@ $contentToAdd[5].categoryId = $createdCategories[1].id
 foreach ($content in $contentToAdd) {
     $contentBody = $content | ConvertTo-Json
     try {
-        $newContent = Invoke-RestMethod -Uri "$apiBaseUrl/contents" -Method POST -Headers $headers -Body $contentBody
-        Write-Host "Created content: $($newContent.data.title) (ID: $($newContent.data.id))"
+        $newContentResponse = Invoke-WebRequest -Uri "$apiBaseUrl/contents" -Method POST -Headers $headers -Body $contentBody -SkipHttpErrorCheck
+        if ($newContentResponse.StatusCode -ne 200) {
+            Write-Host "Failed to create content $($content.title). Status code: $($newContentResponse.StatusCode)"
+            Write-Host "Response body: $($newContentResponse.Content)"
+        } else {
+            $newContent = $newContentResponse.Content | ConvertFrom-Json
+            Write-Host "Created content: $($newContent.data.title) (ID: $($newContent.data.id))"
+        }
     } catch {
         $errorMessage = $_.Exception.Message
-        Write-Host "Failed to create content $($content.title): ${errorMessage}"
+        Write-Host "An unexpected error occurred while creating content $($content.title): ${errorMessage}"
     }
 }

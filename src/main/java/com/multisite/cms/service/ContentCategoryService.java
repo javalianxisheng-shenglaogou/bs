@@ -75,36 +75,36 @@ public interface ContentCategoryService {
      * 创建分类
      * 
      * @param category 分类信息
-     * @param createdBy 创建者
+     * @param createdBy 创建者ID
      * @return 创建的分类
      */
-    ContentCategory createCategory(ContentCategory category, String createdBy);
+    ContentCategory createCategory(ContentCategory category, Long createdBy);
 
     /**
      * 更新分类
-     * 
+     *
      * @param categoryId 分类ID
      * @param updateCategory 更新的分类信息
-     * @param updatedBy 更新者
+     * @param updatedBy 更新者ID
      * @return 更新后的分类
      */
-    ContentCategory updateCategory(Long categoryId, ContentCategory updateCategory, String updatedBy);
+    ContentCategory updateCategory(Long categoryId, ContentCategory updateCategory, Long updatedBy);
 
     /**
      * 删除分类
-     * 
+     *
      * @param categoryId 分类ID
-     * @param deletedBy 删除者
+     * @param deletedBy 删除者ID
      */
-    void deleteCategory(Long categoryId, String deletedBy);
+    void deleteCategory(Long categoryId, Long deletedBy);
 
     /**
      * 批量删除分类
-     * 
+     *
      * @param categoryIds 分类ID列表
-     * @param deletedBy 删除者
+     * @param deletedBy 删除者ID
      */
-    void deleteCategories(List<Long> categoryIds, String deletedBy);
+    void deleteCategories(List<Long> categoryIds, Long deletedBy);
 
     /**
      * 更新分类排序

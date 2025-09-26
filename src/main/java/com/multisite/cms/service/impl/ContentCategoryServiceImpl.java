@@ -136,11 +136,11 @@ public class ContentCategoryServiceImpl implements ContentCategoryService {
      * 创建分类
      * 
      * @param category 分类信息
-     * @param createdBy 创建者
+     * @param createdBy 创建者ID
      * @return 创建的分类
      */
     @Transactional
-    public ContentCategory createCategory(ContentCategory category, String createdBy) {
+    public ContentCategory createCategory(ContentCategory category, Long createdBy) {
         log.info("Creating category: siteId={}, code={}", category.getSite().getId(), category.getCode());
         
         // 验证分类代码唯一性
@@ -172,11 +172,11 @@ public class ContentCategoryServiceImpl implements ContentCategoryService {
      * 
      * @param categoryId 分类ID
      * @param updateCategory 更新的分类信息
-     * @param updatedBy 更新者
+     * @param updatedBy 更新者ID
      * @return 更新后的分类
      */
     @Transactional
-    public ContentCategory updateCategory(Long categoryId, ContentCategory updateCategory, String updatedBy) {
+    public ContentCategory updateCategory(Long categoryId, ContentCategory updateCategory, Long updatedBy) {
         log.info("Updating category: {}", categoryId);
         
         ContentCategory existingCategory = contentCategoryRepository.findById(categoryId)
@@ -235,10 +235,10 @@ public class ContentCategoryServiceImpl implements ContentCategoryService {
      * 删除分类（软删除）
      * 
      * @param categoryId 分类ID
-     * @param deletedBy 删除者
+     * @param deletedBy 删除者ID
      */
     @Transactional
-    public void deleteCategory(Long categoryId, String deletedBy) {
+    public void deleteCategory(Long categoryId, Long deletedBy) {
         log.info("Deleting category: {}", categoryId);
         
         ContentCategory category = contentCategoryRepository.findById(categoryId)
@@ -262,10 +262,10 @@ public class ContentCategoryServiceImpl implements ContentCategoryService {
      * 批量删除分类
      * 
      * @param categoryIds 分类ID列表
-     * @param deletedBy 删除者
+     * @param deletedBy 删除者ID
      */
     @Transactional
-    public void deleteCategories(List<Long> categoryIds, String deletedBy) {
+    public void deleteCategories(List<Long> categoryIds, Long deletedBy) {
         log.info("Batch deleting categories: {}", categoryIds);
         
         List<ContentCategory> categories = contentCategoryRepository.findAllById(categoryIds);

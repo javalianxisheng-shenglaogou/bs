@@ -56,16 +56,16 @@ public abstract class BaseEntity implements Serializable {
     private LocalDateTime updatedAt;
 
     /**
-     * 创建者
+     * 创建者ID
      */
-    @Column(name = "created_by", length = 50)
-    private String createdBy;
+    @Column(name = "created_by")
+    private Long createdBy;
 
     /**
-     * 更新者
+     * 更新者ID
      */
-    @Column(name = "updated_by", length = 50)
-    private String updatedBy;
+    @Column(name = "updated_by")
+    private Long updatedBy;
 
     /**
      * 删除标记（软删除）
