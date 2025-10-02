@@ -12,6 +12,26 @@
         </div>
       </template>
 
+      <!-- 头像上传 -->
+      <div class="avatar-section">
+        <el-upload
+          class="avatar-uploader"
+          :action="uploadAction"
+          :headers="uploadHeaders"
+          :show-file-list="false"
+          :before-upload="beforeAvatarUpload"
+          :on-success="handleAvatarSuccess"
+          :on-error="handleAvatarError"
+        >
+          <img v-if="formData.avatarUrl" :src="formData.avatarUrl" class="avatar" />
+          <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+        </el-upload>
+        <div class="avatar-tip">
+          <p>点击上传头像</p>
+          <p class="tip-text">支持JPG、PNG格式，大小不超过5MB</p>
+        </div>
+      </div>
+
       <el-form
         ref="formRef"
         :model="formData"
@@ -166,13 +186,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { ElMessage, type FormInstance, type FormRules, type UploadProps } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { getCurrentUser } from '@/api/auth'
-import { updateUser } from '@/api/user'
+import { updateUser, updateAvatar } from '@/api/user'
 import { useUserStore } from '@/store/user'
 
 const userStore = useUserStore()
+
+// 上传配置
+const uploadAction = computed(() => 'http://localhost:8080/api/files/avatar')
+const uploadHeaders = computed(() => ({
+  Authorization: `Bearer ${localStorage.getItem('token')}`
+}))
 
 // 表单引用
 const formRef = ref<FormInstance>()
@@ -195,6 +222,7 @@ const formData = reactive({
   birthday: '',
   bio: '',
   status: '',
+  avatarUrl: '',
   roles: [] as string[],
   createdAt: '',
   lastLoginAt: ''
@@ -265,6 +293,7 @@ const loadUserInfo = async () => {
         birthday: data.birthday || '',
         bio: data.bio || '',
         status: data.status,
+        avatarUrl: data.avatarUrl || '',
         roles: data.roles || [],
         createdAt: data.createdAt || '',
         lastLoginAt: data.lastLoginAt || ''
@@ -276,6 +305,50 @@ const loadUserInfo = async () => {
     console.error('加载用户信息失败:', error)
     ElMessage.error(error.message || '加载用户信息失败')
   }
+}
+
+// 头像上传前验证
+const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
+  const isImage = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'].includes(rawFile.type)
+  const isLt5M = rawFile.size / 1024 / 1024 < 5
+
+  if (!isImage) {
+    ElMessage.error('只支持JPG、PNG、GIF、WEBP格式的图片')
+    return false
+  }
+  if (!isLt5M) {
+    ElMessage.error('图片大小不能超过5MB')
+    return false
+  }
+  return true
+}
+
+// 头像上传成功
+const handleAvatarSuccess: UploadProps['onSuccess'] = async (response) => {
+  if (response.code === 200 && response.data) {
+    const avatarUrl = response.data.url
+    formData.avatarUrl = avatarUrl
+
+    // 更新用户头像
+    try {
+      const updateResponse = await updateAvatar(formData.id, avatarUrl)
+      if (updateResponse.code === 200) {
+        ElMessage.success('头像上传成功')
+        // 更新store中的用户信息
+        await userStore.getUserInfo()
+      }
+    } catch (error: any) {
+      console.error('更新头像失败:', error)
+      ElMessage.error(error.message || '更新头像失败')
+    }
+  } else {
+    ElMessage.error(response.message || '上传失败')
+  }
+}
+
+// 头像上传失败
+const handleAvatarError: UploadProps['onError'] = () => {
+  ElMessage.error('头像上传失败，请重试')
 }
 
 // 编辑
@@ -399,6 +472,65 @@ onMounted(() => {
 
 .profile-card :deep(.el-form-item__label) {
   font-weight: 500;
+}
+
+.avatar-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+}
+
+.avatar-uploader {
+  margin-right: 30px;
+}
+
+.avatar-uploader :deep(.el-upload) {
+  border: 2px dashed #d9d9d9;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-uploader :deep(.el-upload:hover) {
+  border-color: #409eff;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar-uploader-icon {
+  font-size: 40px;
+  color: #8c939d;
+}
+
+.avatar-tip {
+  flex: 1;
+}
+
+.avatar-tip p {
+  margin: 0;
+  font-size: 14px;
+  color: #606266;
+}
+
+.avatar-tip .tip-text {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #909399;
 }
 </style>
 

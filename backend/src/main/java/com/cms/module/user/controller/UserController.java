@@ -95,5 +95,21 @@ public class UserController {
         userService.deleteUser(id);
         return ApiResponse.success();
     }
+
+    /**
+     * 更新用户头像
+     */
+    @PutMapping("/{id}/avatar")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "更新用户头像", description = "更新用户头像URL")
+    public ApiResponse<UserDTO> updateAvatar(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> request
+    ) {
+        log.info("更新用户头像: id={}", id);
+        String avatarUrl = request.get("avatarUrl");
+        UserDTO user = userService.updateAvatar(id, avatarUrl);
+        return ApiResponse.success(user);
+    }
 }
 

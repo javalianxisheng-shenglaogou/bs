@@ -227,17 +227,40 @@ public class UserService {
     @Transactional
     public void deleteUser(Long id) {
         log.info("删除用户: {}", id);
-        
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        
+
         if (user.getDeleted()) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
-        
+
         // 软删除
         user.setDeleted(true);
         userRepository.save(user);
+    }
+
+    /**
+     * 更新用户头像
+     */
+    @Transactional
+    public UserDTO updateAvatar(Long id, String avatarUrl) {
+        log.info("更新用户头像: id={}, avatarUrl={}", id, avatarUrl);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getDeleted()) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        user.setAvatarUrl(avatarUrl);
+        user = userRepository.save(user);
+
+        // 初始化懒加载的角色
+        user.getRoles().size();
+
+        return convertToDTO(user);
     }
     
     /**

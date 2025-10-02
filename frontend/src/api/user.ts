@@ -128,3 +128,14 @@ export function deleteUser(id: number) {
   })
 }
 
+/**
+ * 更新用户头像
+ */
+export function updateAvatar(id: number, avatarUrl: string) {
+  return request<User>({
+    url: `/users/${id}/avatar`,
+    method: 'put',
+    data: { avatarUrl }
+  })
+}
+

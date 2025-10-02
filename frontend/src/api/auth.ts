@@ -35,6 +35,7 @@ export interface UserInfo {
   gender?: string
   birthday?: string
   bio?: string
+  avatarUrl?: string
   status: string
   roles: string[]
   permissions: string[]

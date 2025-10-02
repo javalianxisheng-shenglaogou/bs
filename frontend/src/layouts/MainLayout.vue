@@ -37,7 +37,14 @@
           <div class="user-info">
             <el-dropdown @command="handleCommand">
               <span class="el-dropdown-link">
-                {{ userStore.userInfo?.nickname || '用户' }}
+                <el-avatar
+                  :size="32"
+                  :src="userStore.userInfo?.avatarUrl"
+                  class="user-avatar"
+                >
+                  <el-icon><User /></el-icon>
+                </el-avatar>
+                <span class="user-name">{{ userStore.userInfo?.nickname || '用户' }}</span>
                 <el-icon class="el-icon--right"><ArrowDown /></el-icon>
               </span>
               <template #dropdown>
@@ -131,6 +138,15 @@ const handleCommand = (command: string) => {
   cursor: pointer;
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.user-avatar {
+  margin-right: 4px;
+}
+
+.user-name {
+  font-weight: 500;
 }
 
 .el-main {
