@@ -227,6 +227,18 @@ frontend/
 - 阻碍因素：数据库字段设计问题（已通过迁移脚本解决）
 - 状态：成功
 
+[2025-10-03_01:05:00]
+- 已修改：backend/src/main/java/com/cms/module/file/, backend/src/main/java/com/cms/common/config/WebMvcConfig.java, backend/src/main/java/com/cms/module/user/, backend/src/main/resources/application-dev.yml, frontend/src/api/file.ts, frontend/src/api/user.ts, frontend/src/api/auth.ts, frontend/src/views/Profile.vue, frontend/src/layouts/MainLayout.vue
+- 更改：实现用户头像上传和显示功能
+- 原因：
+  1. 用户需要上传和显示个人头像
+  2. 提升用户体验和个性化
+  3. 完善个人中心功能
+- 阻碍因素：
+  1. BusinessException构造函数参数错误（已修复）
+  2. WebMvcConfig类名冲突（已修复，合并到已有配置）
+- 状态：成功
+
 # 最终审查
 
 ## 已完成的功能
@@ -238,21 +250,24 @@ frontend/
 - ✅ JWT认证框架
 - ✅ 用户认证接口（登录、获取用户信息、退出）
 - ✅ 用户管理API（完整CRUD、分页、搜索、筛选）
+- ✅ 文件上传API（头像、图片、文件）
+- ✅ 静态资源访问配置
 - ✅ Spring Security配置
 - ✅ CORS配置
 - ✅ 实体类和Repository
 - ✅ 权限控制（@PreAuthorize）
 
-### 前端（96%完成）
+### 前端（98%完成）
 - ✅ 项目初始化（Vue 3 + TypeScript + Vite）
 - ✅ 路由配置和路由守卫
 - ✅ 状态管理（Pinia）
 - ✅ 登录页面和真实API集成
-- ✅ 主布局（侧边栏、顶部栏）
+- ✅ 主布局（侧边栏、顶部栏、用户头像显示）
 - ✅ 仪表盘页面
 - ✅ 用户管理页面（真实API集成、完整CRUD）
 - ✅ 用户新增/编辑对话框（表单验证）
-- ✅ 个人中心页面（查看和编辑个人信息）
+- ✅ 个人中心页面（查看和编辑个人信息、头像上传）
+- ✅ 文件上传组件（头像上传、预览、验证）
 - ✅ 站点管理页面UI（模拟数据）
 - ✅ 内容管理页面UI（模拟数据）
 - ✅ 路径别名配置
@@ -278,9 +293,10 @@ frontend/
 4. ✅ 添加表单验证（已完成）
 5. ✅ 实现个人中心功能（已完成）
 6. ✅ 修复user_roles表错误（已完成）
-7. 开发后端站点管理API
-8. 开发后端内容管理API
-9. 实现工作流和审批功能
-10. 实现文件上传功能
+7. ✅ 实现文件上传功能（已完成）
+8. 开发后端站点管理API
+9. 开发后端内容管理API
+10. 实现工作流和审批功能
 11. 美化前端页面
+12. 完善文件管理功能（文件列表、删除等）
 

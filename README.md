@@ -102,6 +102,12 @@ spring:
   - POST /api/users - 创建用户
   - PUT /api/users/{id} - 更新用户
   - DELETE /api/users/{id} - 删除用户
+  - PUT /api/users/{id}/avatar - 更新用户头像
+- ✅ 文件上传API
+  - POST /api/files/avatar - 上传头像（最大5MB，支持JPG/PNG/GIF/WEBP）
+  - POST /api/files/image - 上传图片（最大5MB）
+  - POST /api/files/upload - 上传文件（最大10MB）
+- ✅ 静态资源访问（/files/**）
 - ✅ Spring Security配置
 - ✅ CORS跨域配置
 - ✅ 权限控制（@PreAuthorize）
@@ -126,8 +132,16 @@ spring:
 - ✅ 个人中心页面
   - 查看个人信息
   - 编辑个人资料
+  - 头像上传和显示
   - 修改密码表单（待实现）
   - 显示角色和权限
+- ✅ 文件上传功能
+  - 头像上传组件（el-upload）
+  - 文件类型验证
+  - 文件大小验证
+  - 上传进度显示
+  - 实时预览
+- ✅ 用户头像显示（顶部栏、个人中心）
 - ✅ 站点管理页面UI（卡片展示）
 - ✅ 内容管理页面UI（表格、筛选）
 - ✅ 响应式设计
@@ -136,6 +150,7 @@ spring:
 ## 计划功能
 
 - ✅ 用户管理CRUD API（已完成）
+- ✅ 文件上传功能（已完成）
 - 🔄 站点管理CRUD API
 - 🔄 内容管理CRUD API
 - 🔄 分类和标签管理
@@ -144,7 +159,7 @@ spring:
 - 🔄 多语言支持
 - 🔄 内容共享
 - 🔄 数据统计分析
-- 🔄 媒体文件管理
+- 🔄 媒体文件管理（文件列表、删除等）
 
 ## 默认账号
 
@@ -185,6 +200,29 @@ spring:
 ## 更新日志
 
 ### 2025-10-03
+
+#### v0.5.0 - 文件上传功能
+- ✅ 实现文件上传后端API
+  - FileController（头像、图片、文件上传）
+  - FileService（文件验证、保存、URL生成）
+  - FileUploadResponse DTO
+- ✅ 实现用户头像上传和显示
+  - 头像上传组件（el-upload）
+  - 文件类型验证（JPG/PNG/GIF/WEBP）
+  - 文件大小验证（最大5MB）
+  - 实时预览
+  - 圆形头像显示
+- ✅ 更新个人中心页面
+  - 头像上传区域
+  - 头像预览
+  - 上传成功/失败提示
+- ✅ 更新主布局
+  - 顶部栏显示用户头像
+  - 头像+用户名布局
+- ✅ 配置静态资源访问
+  - /files/** 映射到 uploads/ 目录
+  - 文件按日期分类存储（yyyy/MM/dd）
+  - UUID文件名防止冲突
 
 #### v0.4.0 - 个人中心功能和错误修复
 - ✅ 修复user_roles表granted_by字段错误
