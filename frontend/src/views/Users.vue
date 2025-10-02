@@ -5,18 +5,33 @@
         <div class="card-header">
           <span>用户列表</span>
           <div>
+            <el-select
+              v-model="selectedStatus"
+              placeholder="状态"
+              style="width: 120px; margin-right: 10px"
+              clearable
+              @change="handleSearch"
+            >
+              <el-option label="全部状态" value="" />
+              <el-option label="正常" value="ACTIVE" />
+              <el-option label="停用" value="INACTIVE" />
+              <el-option label="锁定" value="LOCKED" />
+              <el-option label="待激活" value="PENDING" />
+            </el-select>
             <el-input
               v-model="searchText"
               placeholder="搜索用户名或邮箱"
               style="width: 200px; margin-right: 10px"
               clearable
               @clear="handleSearch"
+              @keyup.enter="handleSearch"
             >
               <template #prefix>
                 <el-icon><Search /></el-icon>
               </template>
             </el-input>
-            <el-button type="primary" @click="handleAdd">
+            <el-button @click="handleSearch">搜索</el-button>
+            <el-button type="primary" @click="handleAdd" style="margin-left: 10px">
               <el-icon><Plus /></el-icon>
               新增用户
             </el-button>
@@ -68,6 +83,14 @@
         />
       </div>
     </el-card>
+
+    <!-- 用户对话框 -->
+    <UserDialog
+      v-model:visible="dialogVisible"
+      :user-id="currentUserId"
+      :user-data="currentUserData"
+      @success="handleDialogSuccess"
+    />
   </div>
 </template>
 
@@ -75,26 +98,22 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus } from '@element-plus/icons-vue'
-
-// 用户数据类型
-interface User {
-  id: number
-  username: string
-  nickname: string
-  email: string
-  mobile: string
-  status: string
-  roles: string[]
-  createdAt: string
-}
+import { getUserList, deleteUser, getUserById, type User } from '@/api/user'
+import UserDialog from '@/components/UserDialog.vue'
 
 // 响应式数据
 const loading = ref(false)
 const searchText = ref('')
+const selectedStatus = ref('')
 const userList = ref<User[]>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+
+// 对话框相关
+const dialogVisible = ref(false)
+const currentUserId = ref<number>()
+const currentUserData = ref<any>()
 
 // 获取角色名称
 const getRoleName = (roleCode: string) => {
@@ -111,45 +130,24 @@ const getRoleName = (roleCode: string) => {
 const loadUsers = async () => {
   loading.value = true
   try {
-    // TODO: 调用真实API
-    // 模拟数据
-    await new Promise(resolve => setTimeout(resolve, 500))
+    const response = await getUserList({
+      keyword: searchText.value,
+      status: selectedStatus.value,
+      page: currentPage.value,
+      size: pageSize.value,
+      sortBy: 'createdAt',
+      sortOrder: 'DESC'
+    })
 
-    userList.value = [
-      {
-        id: 1,
-        username: 'admin',
-        nickname: '超级管理员',
-        email: 'admin@cms.com',
-        mobile: '13800000001',
-        status: 'ACTIVE',
-        roles: ['SUPER_ADMIN'],
-        createdAt: '2025-01-01 10:00:00'
-      },
-      {
-        id: 2,
-        username: 'siteadmin',
-        nickname: '站点管理员',
-        email: 'siteadmin@cms.com',
-        mobile: '13800000002',
-        status: 'ACTIVE',
-        roles: ['SITE_ADMIN'],
-        createdAt: '2025-01-02 10:00:00'
-      },
-      {
-        id: 3,
-        username: 'editor1',
-        nickname: '编辑者1',
-        email: 'editor1@cms.com',
-        mobile: '13800000003',
-        status: 'ACTIVE',
-        roles: ['EDITOR'],
-        createdAt: '2025-01-03 10:00:00'
-      }
-    ]
-    total.value = 3
-  } catch (error) {
-    ElMessage.error('加载用户列表失败')
+    if (response.code === 200 && response.data) {
+      userList.value = response.data.content
+      total.value = response.data.totalElements
+    } else {
+      ElMessage.error(response.message || '加载用户列表失败')
+    }
+  } catch (error: any) {
+    console.error('加载用户列表失败:', error)
+    ElMessage.error(error.message || '加载用户列表失败')
   } finally {
     loading.value = false
   }
@@ -163,30 +161,59 @@ const handleSearch = () => {
 
 // 新增用户
 const handleAdd = () => {
-  ElMessage.info('新增用户功能开发中...')
+  currentUserId.value = undefined
+  currentUserData.value = undefined
+  dialogVisible.value = true
 }
 
 // 编辑用户
-const handleEdit = (row: User) => {
-  ElMessage.info(`编辑用户: ${row.username}`)
+const handleEdit = async (row: User) => {
+  try {
+    const response = await getUserById(row.id)
+    if (response.code === 200 && response.data) {
+      currentUserId.value = row.id
+      currentUserData.value = response.data
+      dialogVisible.value = true
+    } else {
+      ElMessage.error(response.message || '获取用户信息失败')
+    }
+  } catch (error: any) {
+    console.error('获取用户信息失败:', error)
+    ElMessage.error(error.message || '获取用户信息失败')
+  }
+}
+
+// 对话框成功回调
+const handleDialogSuccess = () => {
+  loadUsers()
 }
 
 // 删除用户
-const handleDelete = (row: User) => {
-  ElMessageBox.confirm(
-    `确定要删除用户 "${row.username}" 吗？`,
-    '警告',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
+const handleDelete = async (row: User) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除用户 "${row.username}" 吗？`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+
+    const response = await deleteUser(row.id)
+    if (response.code === 200) {
+      ElMessage.success('删除成功')
+      loadUsers()
+    } else {
+      ElMessage.error(response.message || '删除失败')
     }
-  ).then(() => {
-    ElMessage.success('删除成功')
-    loadUsers()
-  }).catch(() => {
-    // 取消删除
-  })
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('删除用户失败:', error)
+      ElMessage.error(error.message || '删除失败')
+    }
+  }
 }
 
 // 分页大小改变
