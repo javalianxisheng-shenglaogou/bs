@@ -117,37 +117,37 @@ SELECT 6, id, 1 FROM permissions WHERE code IN (
 );
 
 -- 4. 插入用户数据（密码：admin123，BCrypt加密）
--- $2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi
+-- BCrypt hash for 'admin123': $2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG
 INSERT INTO users (id, username, email, mobile, password_hash, nickname, real_name, gender, status, email_verified, created_by, updated_by) VALUES
-(1, 'admin', 'admin@cms.com', '13800000001', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '超级管理员', '张三', 'MALE', 'ACTIVE', 1, 1, 1),
-(2, 'siteadmin', 'siteadmin@cms.com', '13800000002', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '站点管理员', '李四', 'MALE', 'ACTIVE', 1, 1, 1),
-(3, 'editor1', 'editor1@cms.com', '13800000003', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '编辑小王', '王五', 'FEMALE', 'ACTIVE', 1, 1, 1),
-(4, 'editor2', 'editor2@cms.com', '13800000004', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '编辑小赵', '赵六', 'MALE', 'ACTIVE', 1, 1, 1),
-(5, 'reviewer1', 'reviewer1@cms.com', '13800000005', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '审核员小钱', '钱七', 'FEMALE', 'ACTIVE', 1, 1, 1),
-(6, 'translator1', 'translator1@cms.com', '13800000006', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '翻译小孙', '孙八', 'FEMALE', 'ACTIVE', 1, 1, 1);
+(1, 'admin', 'admin@cms.com', '13800000001', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '超级管理员', '张三', 'MALE', 'ACTIVE', 1, 1, 1),
+(2, 'siteadmin', 'siteadmin@cms.com', '13800000002', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '站点管理员', '李四', 'MALE', 'ACTIVE', 1, 1, 1),
+(3, 'editor1', 'editor1@cms.com', '13800000003', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '编辑小王', '王五', 'FEMALE', 'ACTIVE', 1, 1, 1),
+(4, 'editor2', 'editor2@cms.com', '13800000004', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '编辑小赵', '赵六', 'MALE', 'ACTIVE', 1, 1, 1),
+(5, 'reviewer1', 'reviewer1@cms.com', '13800000005', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '审核员小钱', '钱七', 'FEMALE', 'ACTIVE', 1, 1, 1),
+(6, 'translator1', 'translator1@cms.com', '13800000006', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '翻译小孙', '孙八', 'FEMALE', 'ACTIVE', 1, 1, 1);
 
 -- 继续插入更多测试用户（7-26号用户）
 INSERT INTO users (username, email, password_hash, nickname, status, email_verified, created_by, updated_by) VALUES
-('user007', 'user007@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户007', 'ACTIVE', 1, 1, 1),
-('user008', 'user008@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户008', 'ACTIVE', 1, 1, 1),
-('user009', 'user009@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户009', 'ACTIVE', 1, 1, 1),
-('user010', 'user010@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户010', 'ACTIVE', 1, 1, 1),
-('user011', 'user011@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户011', 'ACTIVE', 1, 1, 1),
-('user012', 'user012@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户012', 'ACTIVE', 1, 1, 1),
-('user013', 'user013@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户013', 'ACTIVE', 1, 1, 1),
-('user014', 'user014@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户014', 'ACTIVE', 1, 1, 1),
-('user015', 'user015@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户015', 'ACTIVE', 1, 1, 1),
-('user016', 'user016@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户016', 'ACTIVE', 1, 1, 1),
-('user017', 'user017@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户017', 'ACTIVE', 1, 1, 1),
-('user018', 'user018@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户018', 'ACTIVE', 1, 1, 1),
-('user019', 'user019@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户019', 'ACTIVE', 1, 1, 1),
-('user020', 'user020@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户020', 'ACTIVE', 1, 1, 1),
-('user021', 'user021@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户021', 'ACTIVE', 1, 1, 1),
-('user022', 'user022@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户022', 'ACTIVE', 1, 1, 1),
-('user023', 'user023@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户023', 'ACTIVE', 1, 1, 1),
-('user024', 'user024@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户024', 'ACTIVE', 1, 1, 1),
-('user025', 'user025@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户025', 'ACTIVE', 1, 1, 1),
-('user026', 'user026@cms.com', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '用户026', 'ACTIVE', 1, 1, 1);
+('user007', 'user007@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户007', 'ACTIVE', 1, 1, 1),
+('user008', 'user008@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户008', 'ACTIVE', 1, 1, 1),
+('user009', 'user009@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户009', 'ACTIVE', 1, 1, 1),
+('user010', 'user010@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户010', 'ACTIVE', 1, 1, 1),
+('user011', 'user011@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户011', 'ACTIVE', 1, 1, 1),
+('user012', 'user012@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户012', 'ACTIVE', 1, 1, 1),
+('user013', 'user013@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户013', 'ACTIVE', 1, 1, 1),
+('user014', 'user014@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户014', 'ACTIVE', 1, 1, 1),
+('user015', 'user015@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户015', 'ACTIVE', 1, 1, 1),
+('user016', 'user016@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户016', 'ACTIVE', 1, 1, 1),
+('user017', 'user017@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户017', 'ACTIVE', 1, 1, 1),
+('user018', 'user018@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户018', 'ACTIVE', 1, 1, 1),
+('user019', 'user019@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户019', 'ACTIVE', 1, 1, 1),
+('user020', 'user020@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户020', 'ACTIVE', 1, 1, 1),
+('user021', 'user021@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户021', 'ACTIVE', 1, 1, 1),
+('user022', 'user022@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户022', 'ACTIVE', 1, 1, 1),
+('user023', 'user023@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户023', 'ACTIVE', 1, 1, 1),
+('user024', 'user024@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户024', 'ACTIVE', 1, 1, 1),
+('user025', 'user025@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户025', 'ACTIVE', 1, 1, 1),
+('user026', 'user026@cms.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', '用户026', 'ACTIVE', 1, 1, 1);
 
 -- 5. 为用户分配角色
 INSERT INTO user_roles (user_id, role_id, granted_by) VALUES
