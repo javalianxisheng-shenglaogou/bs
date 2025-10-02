@@ -55,9 +55,9 @@
           show-icon
         >
           <template #default>
-            <div>超级管理员：admin / admin123</div>
-            <div>站点管理员：siteadmin / admin123</div>
-            <div>编辑者：editor1 / admin123</div>
+            <div>超级管理员：admin / password</div>
+            <div>站点管理员：siteadmin / password</div>
+            <div>编辑者：editor1 / password</div>
           </template>
         </el-alert>
       </div>
@@ -94,33 +94,27 @@ const loginRules: FormRules = {
 
 const handleLogin = async () => {
   if (!loginFormRef.value) return
-  
+
   await loginFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
-      
+
       try {
-        // TODO: 调用登录API
-        // 临时模拟登录
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // 模拟token和用户信息
-        const mockToken = 'mock-jwt-token-' + Date.now()
-        const mockUserInfo = {
-          id: 1,
+        // 调用真实的登录API
+        const success = await userStore.login({
           username: loginForm.username,
-          email: loginForm.username + '@cms.com',
-          nickname: loginForm.username === 'admin' ? '超级管理员' : '用户',
-          roles: ['admin']
+          password: loginForm.password
+        })
+
+        if (success) {
+          ElMessage.success('登录成功')
+          router.push('/')
+        } else {
+          ElMessage.error('登录失败，请检查用户名和密码')
         }
-        
-        userStore.setToken(mockToken)
-        userStore.setUserInfo(mockUserInfo)
-        
-        ElMessage.success('登录成功')
-        router.push('/')
-      } catch (error) {
-        ElMessage.error('登录失败，请检查用户名和密码')
+      } catch (error: any) {
+        console.error('登录错误:', error)
+        ElMessage.error(error.message || '登录失败，请稍后重试')
       } finally {
         loading.value = false
       }
