@@ -218,6 +218,15 @@ frontend/
 - 阻碍因素：无
 - 状态：成功
 
+[2025-10-03_00:36:00]
+- 已修改：backend/src/main/resources/db/migration/V1.1.2__fix_user_roles_granted_by.sql, frontend/src/views/Profile.vue, frontend/src/router/index.ts, frontend/src/layouts/MainLayout.vue, frontend/src/api/auth.ts
+- 更改：修复user_roles表错误，实现个人中心功能
+- 原因：
+  1. user_roles表的granted_by字段NOT NULL但无默认值导致更新用户时500错误
+  2. 用户需要查看和编辑个人信息
+- 阻碍因素：数据库字段设计问题（已通过迁移脚本解决）
+- 状态：成功
+
 # 最终审查
 
 ## 已完成的功能
@@ -234,7 +243,7 @@ frontend/
 - ✅ 实体类和Repository
 - ✅ 权限控制（@PreAuthorize）
 
-### 前端（95%完成）
+### 前端（96%完成）
 - ✅ 项目初始化（Vue 3 + TypeScript + Vite）
 - ✅ 路由配置和路由守卫
 - ✅ 状态管理（Pinia）
@@ -243,6 +252,7 @@ frontend/
 - ✅ 仪表盘页面
 - ✅ 用户管理页面（真实API集成、完整CRUD）
 - ✅ 用户新增/编辑对话框（表单验证）
+- ✅ 个人中心页面（查看和编辑个人信息）
 - ✅ 站点管理页面UI（模拟数据）
 - ✅ 内容管理页面UI（模拟数据）
 - ✅ 路径别名配置
@@ -266,7 +276,11 @@ frontend/
 2. ✅ 前端集成用户管理真实API（已完成）
 3. ✅ 实现新增/编辑对话框（已完成）
 4. ✅ 添加表单验证（已完成）
-5. 开发后端站点管理API
-6. 开发后端内容管理API
-7. 实现文件上传功能
+5. ✅ 实现个人中心功能（已完成）
+6. ✅ 修复user_roles表错误（已完成）
+7. 开发后端站点管理API
+8. 开发后端内容管理API
+9. 实现工作流和审批功能
+10. 实现文件上传功能
+11. 美化前端页面
 
