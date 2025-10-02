@@ -28,7 +28,11 @@ public enum ErrorCode {
     USER_DISABLED(2003, "用户已禁用"),
     USER_LOCKED(2004, "用户已锁定"),
     PASSWORD_ERROR(2005, "密码错误"),
-    
+    USERNAME_ALREADY_EXISTS(2006, "用户名已存在"),
+    EMAIL_ALREADY_EXISTS(2007, "邮箱已存在"),
+    MOBILE_ALREADY_EXISTS(2008, "手机号已存在"),
+    ROLE_NOT_FOUND(2009, "角色不存在"),
+
     // 认证相关错误码 3xxx
     TOKEN_INVALID(3001, "令牌无效"),
     TOKEN_EXPIRED(3002, "令牌已过期"),
