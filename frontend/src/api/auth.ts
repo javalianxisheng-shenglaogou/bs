@@ -30,9 +30,16 @@ export interface UserInfo {
   username: string
   nickname: string
   email: string
+  mobile?: string
+  realName?: string
+  gender?: string
+  birthday?: string
+  bio?: string
   status: string
   roles: string[]
   permissions: string[]
+  createdAt?: string
+  lastLoginAt?: string
 }
 
 /**

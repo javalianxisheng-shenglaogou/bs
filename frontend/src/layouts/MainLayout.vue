@@ -78,7 +78,7 @@ const handleCommand = (command: string) => {
     ElMessage.success('退出成功')
     router.push('/login')
   } else if (command === 'profile') {
-    ElMessage.info('个人中心功能开发中...')
+    router.push('/profile')
   }
 }
 </script>

@@ -37,6 +37,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Contents',
         component: () => import('@/views/Contents.vue'),
         meta: { title: '内容管理', icon: 'Document' }
+      },
+      {
+        path: '/profile',
+        name: 'Profile',
+        component: () => import('@/views/Profile.vue'),
+        meta: { title: '个人中心', icon: 'User' }
       }
     ]
   }
