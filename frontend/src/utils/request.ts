@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus'
-import router from '../router'
+import router from '@/router'
 
 // 创建axios实例
 const service: AxiosInstance = axios.create({
