@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import { User, OfficeBuilding, Document, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { healthCheck } from '../api/test'
+import { healthCheck } from '@/api/test'
 
 const testApi = async () => {
   try {

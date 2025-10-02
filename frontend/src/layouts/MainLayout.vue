@@ -61,7 +61,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '../store/user'
+import { useUserStore } from '@/store/user'
 import { HomeFilled, User, OfficeBuilding, Document, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
