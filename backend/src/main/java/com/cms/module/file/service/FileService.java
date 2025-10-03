@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +31,26 @@ public class FileService {
 
     @Value("${file.upload.base-url:http://localhost:8080/api/files}")
     private String baseUrl;
+
+    private String absoluteUploadPath;
+
+    @PostConstruct
+    public void init() {
+        // 获取绝对路径
+        File uploadDir = new File(uploadPath);
+        if (!uploadDir.isAbsolute()) {
+            // 如果是相对路径,转换为绝对路径
+            uploadDir = new File(System.getProperty("user.dir"), uploadPath);
+        }
+        absoluteUploadPath = uploadDir.getAbsolutePath();
+        log.info("文件上传目录: {}", absoluteUploadPath);
+
+        // 确保目录存在
+        if (!uploadDir.exists()) {
+            boolean created = uploadDir.mkdirs();
+            log.info("创建上传目录: {}, 结果: {}", absoluteUploadPath, created);
+        }
+    }
 
     private static final List<String> ALLOWED_IMAGE_TYPES = Arrays.asList(
             "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"
@@ -112,8 +134,8 @@ public class FileService {
      */
     private FileUploadResponse saveFile(MultipartFile file, String relativePath) {
         try {
-            // 创建目录
-            Path dirPath = Paths.get(uploadPath, relativePath);
+            // 使用绝对路径创建目录
+            Path dirPath = Paths.get(absoluteUploadPath, relativePath);
             Files.createDirectories(dirPath);
 
             // 生成文件名
@@ -128,7 +150,7 @@ public class FileService {
             // 构建URL
             String fileUrl = baseUrl + "/" + relativePath + "/" + filename;
 
-            log.info("文件上传成功: {}", filePath);
+            log.info("文件上传成功: 原文件名={}, 保存路径={}", originalFilename, filePath.toAbsolutePath());
 
             return FileUploadResponse.builder()
                     .filename(filename)
@@ -140,8 +162,8 @@ public class FileService {
                     .build();
 
         } catch (IOException e) {
-            log.error("文件上传失败", e);
-            throw new BusinessException(500, "文件上传失败");
+            log.error("文件上传失败: 原文件名={}, 错误信息={}", file.getOriginalFilename(), e.getMessage(), e);
+            throw new BusinessException(500, "文件上传失败: " + e.getMessage());
         }
     }
 

@@ -199,6 +199,33 @@ spring:
 
 ## 更新日志
 
+### 2025-01-14
+
+#### v0.6.0 - 站点管理功能和头像上传修复
+- ✅ 修复头像上传功能
+  - 创建WebMvcConfig配置类
+  - 配置静态资源映射（/files/** -> uploads/）
+  - 配置CORS跨域访问
+  - 修复文件上传后无法访问的问题
+- ✅ 实现站点管理后端API
+  - SiteController（站点CRUD接口）
+  - SiteService（站点业务逻辑）
+  - SiteRepository（站点数据访问）
+  - SiteDTO、SiteQueryDTO（数据传输对象）
+  - Site实体类
+- ✅ 配置日志系统
+  - 创建logback-spring.xml配置
+  - 按日期分割日志文件
+  - 分级别存储日志（INFO、ERROR、DEBUG、SQL）
+  - 日志保留策略（INFO/ERROR 30天，DEBUG/SQL 7天）
+- ✅ 创建任务管理系统
+  - .tasks文件夹存储开发任务记录
+  - 任务文件格式：YYYY-MM-DD_n_task-name.md
+  - 记录问题分析、解决方案、进度跟踪
+- ✅ 更新.gitignore
+  - 添加logs/目录忽略
+  - 添加uploads/目录忽略
+
 ### 2025-10-03
 
 #### v0.5.0 - 文件上传功能

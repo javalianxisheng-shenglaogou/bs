@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .antMatchers(
                         "/auth/**",              // 认证接口
                         "/test/**",              // 测试接口
+                        "/files/**",             // 静态文件访问
                         "/swagger-ui/**",        // Swagger UI
                         "/swagger-ui.html",      // Swagger UI
                         "/v3/api-docs/**",       // Swagger API文档

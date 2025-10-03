@@ -45,6 +45,9 @@ Thumbs.db
 logs/
 *.log
 
+# Uploads
+uploads/
+
 # Database
 *.db
 *.sqlite

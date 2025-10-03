@@ -335,7 +335,9 @@ const handleAvatarSuccess: UploadProps['onSuccess'] = async (response) => {
       if (updateResponse.code === 200) {
         ElMessage.success('头像上传成功')
         // 更新store中的用户信息
-        await userStore.getUserInfo()
+        await userStore.fetchUserInfo()
+        // 重新加载页面数据
+        await loadUserInfo()
       }
     } catch (error: any) {
       console.error('更新头像失败:', error)
@@ -386,7 +388,7 @@ const handleSave = async () => {
       // 重新加载用户信息
       await loadUserInfo()
       // 更新store中的用户信息
-      await userStore.getUserInfo()
+      await userStore.fetchUserInfo()
     } else {
       ElMessage.error(response.message || '保存失败')
     }

@@ -7,6 +7,7 @@ export interface UserInfo {
   username: string
   email: string
   nickname: string
+  avatarUrl?: string
   status: string
   roles: string[]
   permissions: string[]
@@ -43,6 +44,8 @@ export const useUserStore = defineStore('user', () => {
           roles,
           permissions
         })
+        // 登录后立即获取完整用户信息(包括头像)
+        await fetchUserInfo()
         return true
       }
       return false

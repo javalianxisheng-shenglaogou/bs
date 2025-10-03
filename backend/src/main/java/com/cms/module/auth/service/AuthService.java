@@ -90,11 +90,17 @@ public class AuthService {
 
         CustomUserDetails userDetails = (CustomUserDetails) principal;
 
+        // 从数据库获取最新的用户信息(包括头像)
+        com.cms.module.user.entity.User user = userRepository.findById(userDetails.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
         UserInfoVO userInfo = new UserInfoVO();
         userInfo.setUserId(userDetails.getUserId());
         userInfo.setUsername(userDetails.getUsername());
         userInfo.setNickname(userDetails.getNickname());
         userInfo.setEmail(userDetails.getEmail());
+        userInfo.setMobile(user.getMobile());
+        userInfo.setAvatarUrl(user.getAvatarUrl());
         userInfo.setStatus(userDetails.getStatus());
         userInfo.setRoles(userDetails.getRoleCodes());
         userInfo.setPermissions(userDetails.getPermissionCodes());

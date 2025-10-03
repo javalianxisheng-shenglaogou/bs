@@ -79,11 +79,11 @@ const userStore = useUserStore()
 const activeMenu = computed(() => route.path)
 const pageTitle = computed(() => route.meta.title as string || '')
 
-const handleCommand = (command: string) => {
+const handleCommand = async (command: string) => {
   if (command === 'logout') {
-    userStore.logout()
+    await userStore.logout()
     ElMessage.success('退出成功')
-    router.push('/login')
+    await router.push('/login')
   } else if (command === 'profile') {
     router.push('/profile')
   }
