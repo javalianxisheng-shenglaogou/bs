@@ -26,6 +26,7 @@ spring:
     locations: classpath:db/migration
     encoding: UTF-8
     validate-on-migrate: true
+    out-of-order: true
 
   # 文件上传配置
   servlet:
