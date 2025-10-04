@@ -96,6 +96,18 @@ public class FileService {
     }
 
     /**
+     * 上传分类图片
+     */
+    public FileUploadResponse uploadCategoryImage(MultipartFile file) {
+        // 验证文件
+        validateImageFile(file);
+
+        // 保存文件
+        String relativePath = "categories/" + getDatePath();
+        return saveFile(file, relativePath);
+    }
+
+    /**
      * 验证图片文件
      */
     private void validateImageFile(MultipartFile file) {

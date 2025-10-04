@@ -58,5 +58,17 @@ public class FileController {
         FileUploadResponse response = fileService.uploadFile(file);
         return ApiResponse.success(response);
     }
+
+    /**
+     * 上传分类图片
+     */
+    @PostMapping("/upload/category")
+    @PreAuthorize("hasAuthority('category:create') or hasAuthority('category:update')")
+    @Operation(summary = "上传分类图片", description = "上传分类图标或封面图")
+    public ApiResponse<FileUploadResponse> uploadCategoryImage(@RequestParam("file") MultipartFile file) {
+        log.info("上传分类图片: filename={}, size={}", file.getOriginalFilename(), file.getSize());
+        FileUploadResponse response = fileService.uploadCategoryImage(file);
+        return ApiResponse.success(response);
+    }
 }
 
