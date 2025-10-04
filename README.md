@@ -2,29 +2,40 @@
 
 ## 项目简介
 
-这是一个基于Spring Boot和Vue.js开发的多站点内容管理系统，支持多站点管理、内容共享、权限隔离、工作流审批等功能。
+这是一个基于Spring Boot和Vue 3开发的现代化多站点内容管理系统，支持多站点管理、内容发布、分类管理、用户权限控制、文件上传、系统日志等功能。
+
+### 主要特性
+
+- ✅ **多站点管理** - 支持创建和管理多个独立站点,每个站点独立配置
+- ✅ **内容管理** - 富文本编辑器、图片上传、内容分类、状态管理
+- ✅ **用户权限** - 基于RBAC的细粒度权限控制
+- ✅ **分类管理** - 树形分类结构、无限级分类、排序和可见性控制
+- ✅ **文件上传** - 支持图片、文档等文件上传,自动生成缩略图
+- ✅ **系统日志** - 实时查看系统运行日志,支持筛选和搜索
+- ✅ **响应式设计** - 支持PC和移动端访问
 
 ## 技术栈
 
-### 后端
-- Spring Boot 2.7.18
-- Spring Security
-- Spring Data JPA
-- MySQL 8.0+
-- JWT认证
-- Flyway数据库迁移
-- Swagger API文档
-- Lombok
-- MapStruct
+### 后端技术
 
-### 前端
-- Vue.js 3.3+
-- TypeScript 5.0+
-- Vite 5.4 (兼容Node.js 18)
-- Element Plus 2.8+
-- Pinia 2.1+
-- Vue Router 4.2+
-- Axios 1.7+
+- **框架**: Spring Boot 2.7.18
+- **数据库**: MySQL 8.0
+- **ORM**: Spring Data JPA / Hibernate
+- **安全**: Spring Security + JWT
+- **数据库迁移**: Flyway
+- **日志**: Logback (按天分割)
+- **API文档**: Swagger/OpenAPI 3.0
+- **工具**: Lombok, MapStruct
+
+### 前端技术
+
+- **框架**: Vue 3.3 + TypeScript 5.0
+- **构建工具**: Vite 5.4
+- **UI组件**: Element Plus 2.8
+- **状态管理**: Pinia 2.1
+- **路由**: Vue Router 4.2
+- **HTTP客户端**: Axios 1.7
+- **富文本编辑器**: Quill (@vueup/vue-quill)
 
 ## 项目结构
 

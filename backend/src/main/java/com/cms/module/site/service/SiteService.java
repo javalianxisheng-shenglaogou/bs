@@ -34,6 +34,10 @@ public class SiteService {
 
     private final SiteRepository siteRepository;
 
+    // 注入其他Repository用于统计
+    // private final ContentRepository contentRepository;
+    // private final CategoryRepository categoryRepository;
+
     /**
      * 创建站点
      */

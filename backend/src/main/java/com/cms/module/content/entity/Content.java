@@ -58,7 +58,7 @@ public class Content extends BaseEntity {
     /**
      * 内容类型
      */
-    @Column(name = "content_type", columnDefinition = "ENUM('ARTICLE', 'PAGE', 'NEWS', 'PRODUCT', 'CUSTOM') DEFAULT 'ARTICLE'")
+    @Column(name = "content_type", length = 20)
     private String contentType = "ARTICLE";
 
     /**
@@ -73,23 +73,7 @@ public class Content extends BaseEntity {
     @Column(name = "cover_image", length = 500)
     private String coverImage;
 
-    /**
-     * 缩略图
-     */
-    @Column(length = 500)
-    private String thumbnail;
 
-    /**
-     * 视频URL
-     */
-    @Column(name = "video_url", length = 500)
-    private String videoUrl;
-
-    /**
-     * 音频URL
-     */
-    @Column(name = "audio_url", length = 500)
-    private String audioUrl;
 
     /**
      * 作者ID
@@ -106,7 +90,7 @@ public class Content extends BaseEntity {
     /**
      * 状态
      */
-    @Column(columnDefinition = "ENUM('DRAFT', 'PENDING', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED') DEFAULT 'DRAFT'")
+    @Column(length = 20)
     private String status = "DRAFT";
 
     /**
@@ -116,34 +100,10 @@ public class Content extends BaseEntity {
     private LocalDateTime publishedAt;
 
     /**
-     * 定时发布时间
-     */
-    @Column(name = "scheduled_at")
-    private LocalDateTime scheduledAt;
-
-    /**
      * 浏览次数
      */
     @Column(name = "view_count")
     private Integer viewCount = 0;
-
-    /**
-     * 点赞次数
-     */
-    @Column(name = "like_count")
-    private Integer likeCount = 0;
-
-    /**
-     * 评论次数
-     */
-    @Column(name = "comment_count")
-    private Integer commentCount = 0;
-
-    /**
-     * 分享次数
-     */
-    @Column(name = "share_count")
-    private Integer shareCount = 0;
 
     /**
      * 是否置顶
@@ -162,35 +122,5 @@ public class Content extends BaseEntity {
      */
     @Column(name = "is_original")
     private Boolean isOriginal = true;
-
-    /**
-     * 来源名称
-     */
-    @Column(name = "source_name", length = 100)
-    private String sourceName;
-
-    /**
-     * 来源URL
-     */
-    @Column(name = "source_url", length = 500)
-    private String sourceUrl;
-
-    /**
-     * SEO标题
-     */
-    @Column(name = "seo_title", length = 200)
-    private String seoTitle;
-
-    /**
-     * SEO关键词
-     */
-    @Column(name = "seo_keywords", length = 500)
-    private String seoKeywords;
-
-    /**
-     * SEO描述
-     */
-    @Column(name = "seo_description", columnDefinition = "TEXT")
-    private String seoDescription;
 }
 

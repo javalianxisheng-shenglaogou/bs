@@ -27,6 +27,14 @@
           <el-icon><Document /></el-icon>
           <span>内容管理</span>
         </el-menu-item>
+        <el-menu-item index="/categories">
+          <el-icon><FolderOpened /></el-icon>
+          <span>分类管理</span>
+        </el-menu-item>
+        <el-menu-item index="/logs">
+          <el-icon><Document /></el-icon>
+          <span>系统日志</span>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     
@@ -69,7 +77,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
-import { HomeFilled, User, OfficeBuilding, Document, ArrowDown } from '@element-plus/icons-vue'
+import { HomeFilled, User, OfficeBuilding, Document, FolderOpened, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()

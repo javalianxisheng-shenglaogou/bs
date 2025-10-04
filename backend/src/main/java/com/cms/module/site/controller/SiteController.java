@@ -24,7 +24,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/sites")
+@RequestMapping("/sites")
 @RequiredArgsConstructor
 @Tag(name = "站点管理", description = "站点管理相关接口")
 public class SiteController {
@@ -108,7 +108,7 @@ public class SiteController {
      * 分页查询站点
      */
     @GetMapping
-    @PreAuthorize("hasAuthority('site:view')")
+    @PreAuthorize("hasAuthority('site:list')")
     @Operation(summary = "分页查询站点", description = "根据条件分页查询站点列表")
     public ApiResponse<Page<SiteDTO>> getSites(
             @RequestParam(required = false) String name,
@@ -143,7 +143,7 @@ public class SiteController {
      * 获取所有站点列表
      */
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('site:view')")
+    @PreAuthorize("hasAuthority('site:list')")
     @Operation(summary = "获取所有站点", description = "获取所有站点列表（不分页）")
     public ApiResponse<List<SiteDTO>> getAllSites() {
         log.info("获取所有站点列表请求");
@@ -176,6 +176,27 @@ public class SiteController {
         log.info("设置默认站点请求: id={}", id);
         siteService.setDefaultSite(id);
         return ApiResponse.success();
+    }
+
+    /**
+     * 获取站点统计信息
+     */
+    @GetMapping("/{id}/statistics")
+    @PreAuthorize("hasAuthority('site:view')")
+    @Operation(summary = "获取站点统计", description = "获取站点的统计信息")
+    public ApiResponse<Map<String, Object>> getSiteStatistics(@PathVariable Long id) {
+        log.info("获取站点统计请求: id={}", id);
+        // 临时返回模拟数据
+        Map<String, Object> statistics = Map.of(
+            "contentCount", 0L,
+            "publishedContentCount", 0L,
+            "draftContentCount", 0L,
+            "categoryCount", 0L,
+            "userCount", 0L,
+            "todayVisits", 0L,
+            "totalVisits", 0L
+        );
+        return ApiResponse.success(statistics);
     }
 }
 

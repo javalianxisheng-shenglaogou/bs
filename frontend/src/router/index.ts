@@ -39,6 +39,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '内容管理', icon: 'Document' }
       },
       {
+        path: '/categories',
+        name: 'Categories',
+        component: () => import('@/views/Categories.vue'),
+        meta: { title: '分类管理', icon: 'FolderOpened' }
+      },
+      {
+        path: '/logs',
+        name: 'Logs',
+        component: () => import('@/views/Logs.vue'),
+        meta: { title: '系统日志', icon: 'Document' }
+      },
+      {
         path: '/profile',
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),

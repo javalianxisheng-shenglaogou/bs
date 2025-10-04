@@ -129,12 +129,7 @@
         </el-form-item>
 
         <el-form-item label="内容">
-          <el-input
-            v-model="formData.content"
-            type="textarea"
-            :rows="10"
-            placeholder="请输入内容"
-          />
+          <RichTextEditor v-model="formData.content" height="400px" placeholder="请输入内容..." />
         </el-form-item>
 
         <el-form-item label="内容类型">
@@ -148,7 +143,18 @@
         </el-form-item>
 
         <el-form-item label="封面图">
-          <el-input v-model="formData.coverImage" placeholder="请输入封面图URL" />
+          <el-upload
+            class="cover-uploader"
+            :action="uploadUrl"
+            :headers="uploadHeaders"
+            :show-file-list="false"
+            :on-success="handleCoverSuccess"
+            :before-upload="beforeCoverUpload"
+          >
+            <img v-if="formData.coverImage" :src="formData.coverImage" class="cover-image" />
+            <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
+          </el-upload>
+          <div class="upload-tip">建议尺寸: 800x450px, 支持jpg/png格式, 大小不超过2MB</div>
         </el-form-item>
 
         <el-form-item label="状态">
@@ -163,23 +169,6 @@
           <el-checkbox v-model="formData.isTop">置顶</el-checkbox>
           <el-checkbox v-model="formData.isFeatured">推荐</el-checkbox>
           <el-checkbox v-model="formData.isOriginal">原创</el-checkbox>
-        </el-form-item>
-
-        <el-form-item label="SEO标题">
-          <el-input v-model="formData.seoTitle" placeholder="请输入SEO标题" />
-        </el-form-item>
-
-        <el-form-item label="SEO关键词">
-          <el-input v-model="formData.seoKeywords" placeholder="请输入SEO关键词" />
-        </el-form-item>
-
-        <el-form-item label="SEO描述">
-          <el-input
-            v-model="formData.seoDescription"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入SEO描述"
-          />
         </el-form-item>
       </el-form>
 
@@ -205,8 +194,15 @@ import {
 } from '@/api/content'
 import { getAllSitesApi, type Site } from '@/api/site'
 import { useUserStore } from '@/store/user'
+import RichTextEditor from '@/components/RichTextEditor.vue'
 
 const userStore = useUserStore()
+
+// 上传配置
+const uploadUrl = import.meta.env.VITE_API_BASE_URL + '/files/upload'
+const uploadHeaders = {
+  Authorization: `Bearer ${userStore.token}`
+}
 
 // 响应式数据
 const loading = ref(false)
@@ -256,7 +252,8 @@ const formRules: FormRules = {
 const loadSites = async () => {
   try {
     const data = await getAllSitesApi()
-    siteList.value = data
+    // 过滤掉undefined的项
+    siteList.value = (data || []).filter(site => site && site.id)
   } catch (error: any) {
     console.error('加载站点列表失败:', error)
   }
@@ -303,10 +300,33 @@ const resetForm = () => {
   formData.isTop = false
   formData.isFeatured = false
   formData.isOriginal = true
-  formData.seoTitle = ''
-  formData.seoKeywords = ''
-  formData.seoDescription = ''
   formRef.value?.clearValidate()
+}
+
+// 封面上传成功
+const handleCoverSuccess = (response: any) => {
+  if (response.code === 200) {
+    formData.coverImage = response.data.url
+    ElMessage.success('封面上传成功')
+  } else {
+    ElMessage.error(response.message || '封面上传失败')
+  }
+}
+
+// 封面上传前验证
+const beforeCoverUpload = (file: File) => {
+  const isImage = file.type === 'image/jpeg' || file.type === 'image/png'
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('封面图只能是 JPG/PNG 格式!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('封面图大小不能超过 2MB!')
+    return false
+  }
+  return true
 }
 
 // 新增内容
@@ -456,6 +476,41 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.cover-uploader {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.cover-uploader:hover {
+  border-color: #409eff;
+}
+
+.cover-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 100px;
+  line-height: 100px;
+  text-align: center;
+}
+
+.cover-image {
+  width: 178px;
+  height: 100px;
+  display: block;
+  object-fit: cover;
+}
+
+.upload-tip {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
 }
 </style>
 

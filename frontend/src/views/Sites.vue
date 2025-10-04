@@ -14,7 +14,7 @@
       <!-- 站点卡片列表 -->
       <el-row :gutter="20" v-loading="loading">
         <el-col :span="8" v-for="site in siteList" :key="site.id" style="margin-bottom: 20px">
-          <el-card shadow="hover">
+          <el-card shadow="hover" class="site-card">
             <template #header>
               <div class="site-header">
                 <span class="site-name">{{ site.name }}</span>
@@ -24,9 +24,15 @@
               </div>
             </template>
             <div class="site-info">
-              <p><strong>域名：</strong>{{ site.domain }}</p>
-              <p><strong>描述：</strong>{{ site.description }}</p>
-              <p><strong>创建时间：</strong>{{ site.createdAt }}</p>
+              <div class="site-logo" v-if="site.logoUrl">
+                <img :src="site.logoUrl" alt="Logo" />
+              </div>
+              <p><strong>站点代码：</strong>{{ site.code }}</p>
+              <p><strong>域名：</strong><a :href="`http://${site.domain}`" target="_blank">{{ site.domain }}</a></p>
+              <p><strong>描述：</strong>{{ site.description || '暂无描述' }}</p>
+              <p><strong>语言/时区：</strong>{{ site.language }} / {{ site.timezone }}</p>
+              <p v-if="site.isDefault"><el-tag type="warning" size="small">默认站点</el-tag></p>
+              <p><strong>创建时间：</strong>{{ formatDate(site.createdAt) }}</p>
             </div>
             <template #footer>
               <div class="site-actions">
@@ -108,11 +114,121 @@
         <el-form-item label="默认站点">
           <el-switch v-model="formData.isDefault" />
         </el-form-item>
+
+        <el-divider content-position="left">SEO设置</el-divider>
+
+        <el-form-item label="SEO标题">
+          <el-input v-model="formData.seoTitle" placeholder="请输入SEO标题" />
+        </el-form-item>
+
+        <el-form-item label="SEO关键词">
+          <el-input v-model="formData.seoKeywords" placeholder="请输入SEO关键词,多个用逗号分隔" />
+        </el-form-item>
+
+        <el-form-item label="SEO描述">
+          <el-input
+            v-model="formData.seoDescription"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入SEO描述"
+          />
+        </el-form-item>
+
+        <el-divider content-position="left">联系信息</el-divider>
+
+        <el-form-item label="联系邮箱">
+          <el-input v-model="formData.contactEmail" placeholder="请输入联系邮箱" />
+        </el-form-item>
+
+        <el-form-item label="联系电话">
+          <el-input v-model="formData.contactPhone" placeholder="请输入联系电话" />
+        </el-form-item>
+
+        <el-form-item label="联系地址">
+          <el-input v-model="formData.contactAddress" placeholder="请输入联系地址" />
+        </el-form-item>
       </el-form>
 
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSubmit">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 站点配置对话框 -->
+    <el-dialog
+      v-model="configDialogVisible"
+      title="站点配置"
+      width="800px"
+      :close-on-click-modal="false"
+    >
+      <el-tabs v-model="activeTab">
+        <el-tab-pane label="基本配置" name="basic">
+          <el-form label-width="120px">
+            <el-form-item label="Logo">
+              <el-upload
+                class="logo-uploader"
+                action="/api/files/upload"
+                :show-file-list="false"
+                :on-success="handleLogoSuccess"
+                :headers="uploadHeaders"
+              >
+                <img v-if="configData.logoUrl" :src="configData.logoUrl" class="logo" />
+                <el-icon v-else class="logo-uploader-icon"><Plus /></el-icon>
+              </el-upload>
+            </el-form-item>
+
+            <el-form-item label="Favicon">
+              <el-upload
+                class="favicon-uploader"
+                action="/api/files/upload"
+                :show-file-list="false"
+                :on-success="handleFaviconSuccess"
+                :headers="uploadHeaders"
+              >
+                <img v-if="configData.faviconUrl" :src="configData.faviconUrl" class="favicon" />
+                <el-icon v-else class="favicon-uploader-icon"><Plus /></el-icon>
+              </el-upload>
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+
+        <el-tab-pane label="主题配置" name="theme">
+          <el-form label-width="120px">
+            <el-form-item label="主题色">
+              <el-color-picker v-model="themeConfig.primaryColor" />
+            </el-form-item>
+            <el-form-item label="辅助色">
+              <el-color-picker v-model="themeConfig.secondaryColor" />
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+
+        <el-tab-pane label="高级配置" name="advanced">
+          <el-form label-width="120px">
+            <el-form-item label="自定义CSS">
+              <el-input
+                v-model="advancedConfig.customCss"
+                type="textarea"
+                :rows="10"
+                placeholder="请输入自定义CSS代码"
+              />
+            </el-form-item>
+            <el-form-item label="自定义JS">
+              <el-input
+                v-model="advancedConfig.customJs"
+                type="textarea"
+                :rows="10"
+                placeholder="请输入自定义JavaScript代码"
+              />
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
+      </el-tabs>
+
+      <template #footer>
+        <el-button @click="configDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveConfig">保存配置</el-button>
       </template>
     </el-dialog>
   </div>
@@ -216,9 +332,67 @@ const handleEdit = (site: Site) => {
   dialogVisible.value = true
 }
 
+// 配置相关
+const configDialogVisible = ref(false)
+const activeTab = ref('basic')
+const configData = reactive({
+  id: 0,
+  logoUrl: '',
+  faviconUrl: ''
+})
+const themeConfig = reactive({
+  primaryColor: '#409EFF',
+  secondaryColor: '#67C23A'
+})
+const advancedConfig = reactive({
+  customCss: '',
+  customJs: ''
+})
+
+// 上传请求头
+const uploadHeaders = {
+  Authorization: `Bearer ${localStorage.getItem('token')}`
+}
+
+// Logo上传成功
+const handleLogoSuccess = (response: any) => {
+  if (response.code === 200) {
+    configData.logoUrl = response.data.url
+    ElMessage.success('Logo上传成功')
+  }
+}
+
+// Favicon上传成功
+const handleFaviconSuccess = (response: any) => {
+  if (response.code === 200) {
+    configData.faviconUrl = response.data.url
+    ElMessage.success('Favicon上传成功')
+  }
+}
+
 // 配置站点
 const handleConfig = (site: Site) => {
-  ElMessage.info(`配置站点功能开发中: ${site.name}`)
+  configData.id = site.id!
+  configData.logoUrl = site.logoUrl || ''
+  configData.faviconUrl = site.faviconUrl || ''
+  activeTab.value = 'basic'
+  configDialogVisible.value = true
+}
+
+// 保存配置
+const handleSaveConfig = async () => {
+  try {
+    await updateSiteApi(configData.id, {
+      logoUrl: configData.logoUrl,
+      faviconUrl: configData.faviconUrl
+    } as Site)
+    ElMessage.success('配置保存成功')
+    configDialogVisible.value = false
+    await loadSites()
+  } catch (error: any) {
+    console.error('保存配置失败:', error)
+    ElMessage.error(error.message || '保存配置失败')
+  }
 }
 
 // 删除站点
@@ -269,6 +443,19 @@ const handleSubmit = async () => {
   })
 }
 
+// 格式化日期
+const formatDate = (dateStr: string | undefined) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 // 组件挂载时加载数据
 onMounted(() => {
   loadSites()
@@ -282,6 +469,17 @@ onMounted(() => {
   align-items: center;
 }
 
+.site-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.site-card :deep(.el-card__body) {
+  flex: 1;
+  overflow-y: auto;
+}
+
 .site-header {
   display: flex;
   justify-content: space-between;
@@ -293,14 +491,89 @@ onMounted(() => {
   font-weight: bold;
 }
 
+.site-logo {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.site-logo img {
+  max-width: 100%;
+  max-height: 80px;
+  object-fit: contain;
+}
+
 .site-info p {
   margin: 8px 0;
   color: #606266;
 }
 
+.site-info a {
+  color: #409eff;
+  text-decoration: none;
+}
+
+.site-info a:hover {
+  text-decoration: underline;
+}
+
 .site-actions {
   display: flex;
   justify-content: space-between;
+}
+
+.logo-uploader,
+.favicon-uploader {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.logo-uploader:hover,
+.favicon-uploader:hover {
+  border-color: #409eff;
+}
+
+.logo-uploader {
+  width: 178px;
+  height: 178px;
+}
+
+.favicon-uploader {
+  width: 64px;
+  height: 64px;
+}
+
+.logo-uploader-icon,
+.favicon-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  text-align: center;
+  line-height: 178px;
+}
+
+.favicon-uploader-icon {
+  width: 64px;
+  height: 64px;
+  line-height: 64px;
+}
+
+.logo {
+  width: 178px;
+  height: 178px;
+  display: block;
+  object-fit: contain;
+}
+
+.favicon {
+  width: 64px;
+  height: 64px;
+  display: block;
+  object-fit: contain;
 }
 </style>
 

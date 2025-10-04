@@ -62,9 +62,9 @@
           </template>
           <el-space wrap>
             <el-button type="primary" @click="testApi">测试API连接</el-button>
-            <el-button type="success">创建内容</el-button>
-            <el-button type="warning">创建站点</el-button>
-            <el-button type="info">查看日志</el-button>
+            <el-button type="success" @click="createContent">创建内容</el-button>
+            <el-button type="warning" @click="createSite">创建站点</el-button>
+            <el-button type="info" @click="viewLogs">查看日志</el-button>
           </el-space>
         </el-card>
       </el-col>
@@ -76,6 +76,9 @@
 import { User, OfficeBuilding, Document, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { healthCheck } from '@/api/test'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const testApi = async () => {
   try {
@@ -84,6 +87,18 @@ const testApi = async () => {
   } catch (error) {
     ElMessage.error('API连接失败')
   }
+}
+
+const createContent = () => {
+  router.push('/contents')
+}
+
+const createSite = () => {
+  router.push('/sites')
+}
+
+const viewLogs = () => {
+  router.push('/logs')
 }
 </script>
 

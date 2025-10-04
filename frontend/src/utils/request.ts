@@ -19,6 +19,19 @@ service.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+
+    // 过滤掉undefined和null的参数
+    if (config.params) {
+      const filteredParams: any = {}
+      Object.keys(config.params).forEach(key => {
+        const value = config.params[key]
+        if (value !== undefined && value !== null && value !== '') {
+          filteredParams[key] = value
+        }
+      })
+      config.params = filteredParams
+    }
+
     return config
   },
   (error) => {
@@ -31,21 +44,22 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     const res = response.data
-    
+
     // 如果返回的状态码不是200，说明接口有问题
     if (res.code !== 200) {
       ElMessage.error(res.message || '请求失败')
-      
+
       // 401: 未授权
       if (res.code === 401) {
         localStorage.removeItem('token')
         router.push('/login')
       }
-      
+
       return Promise.reject(new Error(res.message || '请求失败'))
     }
-    
-    return res
+
+    // 返回data字段
+    return res.data
   },
   (error) => {
     console.error('响应错误:', error)

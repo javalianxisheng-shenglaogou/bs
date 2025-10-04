@@ -14,26 +14,14 @@ export interface Content {
   contentType?: string
   template?: string
   coverImage?: string
-  thumbnail?: string
-  videoUrl?: string
-  audioUrl?: string
   authorId?: number
   authorName?: string
   status?: string
   publishedAt?: string
-  scheduledAt?: string
   viewCount?: number
-  likeCount?: number
-  commentCount?: number
-  shareCount?: number
   isTop?: boolean
   isFeatured?: boolean
   isOriginal?: boolean
-  sourceName?: string
-  sourceUrl?: string
-  seoTitle?: string
-  seoKeywords?: string
-  seoDescription?: string
   createdAt?: string
   updatedAt?: string
   createdBy?: number

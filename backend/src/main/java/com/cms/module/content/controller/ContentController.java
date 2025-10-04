@@ -23,7 +23,7 @@ import java.util.List;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/contents")
+@RequestMapping("/contents")
 @RequiredArgsConstructor
 @Tag(name = "内容管理", description = "内容管理相关接口")
 public class ContentController {
