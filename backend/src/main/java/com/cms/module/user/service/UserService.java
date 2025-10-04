@@ -41,6 +41,17 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     
     /**
+     * 获取所有用户（不分页）
+     */
+    @Transactional(readOnly = true)
+    public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findByDeletedFalse();
+        return users.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 获取用户列表
      */
     @Transactional(readOnly = true)

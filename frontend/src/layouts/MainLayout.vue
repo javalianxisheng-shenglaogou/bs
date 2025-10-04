@@ -31,6 +31,18 @@
           <el-icon><FolderOpened /></el-icon>
           <span>分类管理</span>
         </el-menu-item>
+        <el-menu-item index="/workflows">
+          <el-icon><Connection /></el-icon>
+          <span>工作流管理</span>
+        </el-menu-item>
+        <el-menu-item index="/workflow-instances">
+          <el-icon><List /></el-icon>
+          <span>工作流实例</span>
+        </el-menu-item>
+        <el-menu-item index="/workflow-tasks">
+          <el-icon><Checked /></el-icon>
+          <span>我的任务</span>
+        </el-menu-item>
         <el-menu-item index="/logs">
           <el-icon><Document /></el-icon>
           <span>系统日志</span>
@@ -77,7 +89,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
-import { HomeFilled, User, OfficeBuilding, Document, FolderOpened, ArrowDown } from '@element-plus/icons-vue'
+import { HomeFilled, User, OfficeBuilding, Document, FolderOpened, Connection, List, Checked, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const route = useRoute()

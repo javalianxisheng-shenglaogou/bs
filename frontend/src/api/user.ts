@@ -139,3 +139,13 @@ export function updateAvatar(id: number, avatarUrl: string) {
   })
 }
 
+/**
+ * 获取所有用户（不分页）
+ */
+export function getAllUsersApi() {
+  return request({
+    url: '/users/all',
+    method: 'get'
+  })
+}
+

@@ -27,6 +27,18 @@ public class UserController {
     private final UserService userService;
     
     /**
+     * 获取所有用户（不分页）
+     */
+    @GetMapping("/all")
+    @PreAuthorize("hasAuthority('user:view')")
+    @Operation(summary = "获取所有用户", description = "获取所有用户列表（不分页）")
+    public ApiResponse<java.util.List<UserDTO>> getAllUsers() {
+        log.info("获取所有用户列表");
+        java.util.List<UserDTO> result = userService.getAllUsers();
+        return ApiResponse.success(result);
+    }
+
+    /**
      * 获取用户列表
      */
     @GetMapping

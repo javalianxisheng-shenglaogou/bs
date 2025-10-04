@@ -45,6 +45,30 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '分类管理', icon: 'FolderOpened' }
       },
       {
+        path: '/workflows',
+        name: 'Workflows',
+        component: () => import('@/views/Workflows.vue'),
+        meta: { title: '工作流管理', icon: 'Connection' }
+      },
+      {
+        path: '/workflows/:id/design',
+        name: 'WorkflowDesigner',
+        component: () => import('@/views/WorkflowDesigner.vue'),
+        meta: { title: '工作流设计器', icon: 'Connection' }
+      },
+      {
+        path: '/workflow-instances',
+        name: 'WorkflowInstances',
+        component: () => import('@/views/WorkflowInstances.vue'),
+        meta: { title: '工作流实例', icon: 'List' }
+      },
+      {
+        path: '/workflow-tasks',
+        name: 'WorkflowTasks',
+        component: () => import('@/views/WorkflowTasks.vue'),
+        meta: { title: '我的任务', icon: 'Checked' }
+      },
+      {
         path: '/logs',
         name: 'Logs',
         component: () => import('@/views/Logs.vue'),
