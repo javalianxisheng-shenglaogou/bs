@@ -47,6 +47,14 @@
             <el-tag v-else type="info">已归档</el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="审批状态" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.approvalStatus === 'APPROVED'" type="success">已通过</el-tag>
+            <el-tag v-else-if="row.approvalStatus === 'PENDING'" type="warning">审批中</el-tag>
+            <el-tag v-else-if="row.approvalStatus === 'REJECTED'" type="danger">已拒绝</el-tag>
+            <el-tag v-else type="info">无需审批</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="authorName" label="作者" width="100" />
         <el-table-column prop="viewCount" label="浏览量" width="100" />
         <el-table-column label="置顶/推荐" width="100">
@@ -56,13 +64,41 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180" />
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="350" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="success" size="small" @click="handlePublish(row)" v-if="row.status !== 'PUBLISHED'">
+
+            <!-- 提交审批按钮 -->
+            <el-button
+              v-if="row.status === 'DRAFT' && row.approvalStatus === 'NONE'"
+              type="success"
+              size="small"
+              @click="handleSubmitApproval(row)"
+            >
+              提交审批
+            </el-button>
+
+            <!-- 撤回审批按钮 -->
+            <el-button
+              v-if="row.approvalStatus === 'PENDING'"
+              type="warning"
+              size="small"
+              @click="handleWithdrawApproval(row)"
+            >
+              撤回审批
+            </el-button>
+
+            <!-- 直接发布按钮(仅管理员) -->
+            <el-button
+              v-if="row.status !== 'PUBLISHED' && row.approvalStatus !== 'PENDING'"
+              type="success"
+              size="small"
+              @click="handlePublish(row)"
+            >
               发布
             </el-button>
-            <el-button type="warning" size="small" @click="handleUnpublish(row)" v-else>
+
+            <el-button type="warning" size="small" @click="handleUnpublish(row)" v-if="row.status === 'PUBLISHED'">
               下线
             </el-button>
             <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
@@ -190,6 +226,8 @@ import {
   updateContentApi,
   deleteContentApi,
   updateContentStatusApi,
+  submitApprovalApi,
+  withdrawApprovalApi,
   type Content
 } from '@/api/content'
 import { getAllSitesApi, type Site } from '@/api/site'
@@ -394,6 +432,54 @@ const handleUnpublish = async (row: Content) => {
     if (error !== 'cancel') {
       console.error('下线内容失败:', error)
       ElMessage.error(error.message || '下线内容失败')
+    }
+  }
+}
+
+// 提交审批
+const handleSubmitApproval = async (row: Content) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要提交内容 "${row.title}" 进行审批吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'info',
+      }
+    )
+
+    await submitApprovalApi(row.id!)
+    ElMessage.success('提交审批成功')
+    await loadContents()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('提交审批失败:', error)
+      ElMessage.error(error.message || '提交审批失败')
+    }
+  }
+}
+
+// 撤回审批
+const handleWithdrawApproval = async (row: Content) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要撤回内容 "${row.title}" 的审批吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+
+    await withdrawApprovalApi(row.id!)
+    ElMessage.success('撤回审批成功')
+    await loadContents()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('撤回审批失败:', error)
+      ElMessage.error(error.message || '撤回审批失败')
     }
   }
 }

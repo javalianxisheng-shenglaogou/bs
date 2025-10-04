@@ -27,6 +27,13 @@ export interface Content {
   createdBy?: number
   updatedBy?: number
   version?: number
+  // 审批相关字段
+  workflowInstanceId?: number
+  approvalStatus?: string
+  submittedAt?: string
+  approvedAt?: string
+  approvedBy?: number
+  rejectReason?: string
 }
 
 /**
@@ -140,6 +147,26 @@ export const updateContentStatusApi = (id: number, status: string) => {
     url: `/contents/${id}/status`,
     method: 'patch',
     params: { status }
+  })
+}
+
+/**
+ * 提交审批
+ */
+export const submitApprovalApi = (id: number) => {
+  return request({
+    url: `/contents/${id}/submit-approval`,
+    method: 'post'
+  })
+}
+
+/**
+ * 撤回审批
+ */
+export const withdrawApprovalApi = (id: number) => {
+  return request({
+    url: `/contents/${id}/withdraw-approval`,
+    method: 'post'
   })
 }
 
