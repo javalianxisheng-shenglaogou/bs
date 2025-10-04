@@ -250,7 +250,7 @@ import {
   type Category
 } from '@/api/category'
 import { getAllSitesApi, type Site } from '@/api/site'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '@/store/user'
 
 const userStore = useUserStore()
 
