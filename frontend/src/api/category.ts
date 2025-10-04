@@ -124,8 +124,8 @@ export const deleteCategoryApi = (id: number) => {
 export const updateCategoryVisibilityApi = (id: number, isVisible: boolean) => {
   return request({
     url: `/categories/${id}/visibility`,
-    method: 'patch',
-    params: { isVisible }
+    method: 'put',
+    data: { isVisible }
   })
 }
 

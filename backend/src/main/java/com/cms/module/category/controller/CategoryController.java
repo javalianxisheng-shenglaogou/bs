@@ -92,13 +92,13 @@ public class CategoryController {
     }
 
     @Operation(summary = "更新分类可见性", description = "更新分类的可见性状态")
-    @PatchMapping("/{id}/visibility")
+    @PutMapping("/{id}/visibility")
     @PreAuthorize("hasAuthority('category:update')")
     public ApiResponse<Void> updateVisibility(
             @PathVariable Long id,
-            @RequestParam Boolean isVisible
+            @RequestBody CategoryDTO dto
     ) {
-        categoryService.updateVisibility(id, isVisible);
+        categoryService.updateVisibility(id, dto.getIsVisible());
         return ApiResponse.success();
     }
 }
