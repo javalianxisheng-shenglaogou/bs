@@ -307,12 +307,10 @@ const formRules: FormRules = {
 // 加载站点列表
 const loadSites = async () => {
   try {
-    const response = await getAllSitesApi()
-    if (response.code === 200) {
-      siteList.value = response.data
-      if (siteList.value.length > 0 && !selectedSite.value) {
-        selectedSite.value = siteList.value[0].id
-      }
+    const data = await getAllSitesApi()
+    siteList.value = data
+    if (siteList.value.length > 0 && !selectedSite.value) {
+      selectedSite.value = siteList.value[0].id
     }
   } catch (error: any) {
     console.error('加载站点列表失败:', error)
@@ -329,11 +327,9 @@ const loadCategoryTree = async () => {
 
   loading.value = true
   try {
-    const response = await getCategoryTreeApi(selectedSite.value)
-    if (response.code === 200) {
-      categoryTree.value = response.data
-      categoryTreeOptions.value = response.data
-    }
+    const data = await getCategoryTreeApi(selectedSite.value)
+    categoryTree.value = data
+    categoryTreeOptions.value = data
   } catch (error: any) {
     console.error('加载分类树失败:', error)
     ElMessage.error(error.message || '加载分类树失败')
