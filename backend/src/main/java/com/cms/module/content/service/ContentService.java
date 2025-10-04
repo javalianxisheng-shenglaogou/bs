@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 public class ContentService {
 
     private final ContentRepository contentRepository;
+    private final org.springframework.context.ApplicationContext applicationContext;
 
     /**
      * 创建内容
@@ -259,6 +260,119 @@ public class ContentService {
 
         contentRepository.save(content);
         log.info("内容状态更新成功: id={}, status={}", id, status);
+    }
+
+    /**
+     * 提交审批
+     */
+    @Transactional
+    public void submitApproval(Long id) {
+        log.info("提交内容审批: id={}", id);
+
+        Content content = contentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("内容不存在"));
+
+        if (!"DRAFT".equals(content.getStatus())) {
+            throw new RuntimeException("只有草稿状态的内容才能提交审批");
+        }
+
+        if ("PENDING".equals(content.getApprovalStatus())) {
+            throw new RuntimeException("内容已在审批中");
+        }
+
+        // 启动工作流
+        com.cms.module.workflow.service.WorkflowInstanceService workflowService =
+            applicationContext.getBean(com.cms.module.workflow.service.WorkflowInstanceService.class);
+
+        com.cms.module.workflow.dto.StartWorkflowRequest request = new com.cms.module.workflow.dto.StartWorkflowRequest();
+        request.setWorkflowCode("content_approval");
+        request.setBusinessType("CONTENT");
+        request.setBusinessId(id);
+        request.setBusinessTitle(content.getTitle());
+
+        com.cms.module.workflow.dto.WorkflowInstanceDTO instance = workflowService.startWorkflow(request);
+
+        // 更新内容状态
+        content.setWorkflowInstanceId(instance.getId());
+        content.setApprovalStatus("PENDING");
+        content.setSubmittedAt(LocalDateTime.now());
+        contentRepository.save(content);
+
+        log.info("内容审批提交成功: id={}, instanceId={}", id, instance.getId());
+    }
+
+    /**
+     * 撤回审批
+     */
+    @Transactional
+    public void withdrawApproval(Long id) {
+        log.info("撤回内容审批: id={}", id);
+
+        Content content = contentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("内容不存在"));
+
+        if (!"PENDING".equals(content.getApprovalStatus())) {
+            throw new RuntimeException("只有审批中的内容才能撤回");
+        }
+
+        // 取消工作流实例
+        if (content.getWorkflowInstanceId() != null) {
+            com.cms.module.workflow.service.WorkflowInstanceService workflowService =
+                applicationContext.getBean(com.cms.module.workflow.service.WorkflowInstanceService.class);
+            workflowService.cancelInstance(content.getWorkflowInstanceId());
+        }
+
+        // 更新内容状态
+        content.setWorkflowInstanceId(null);
+        content.setApprovalStatus("NONE");
+        content.setSubmittedAt(null);
+        contentRepository.save(content);
+
+        log.info("内容审批撤回成功: id={}", id);
+    }
+
+    /**
+     * 审批通过回调
+     */
+    @Transactional
+    public void onApprovalApproved(Long contentId, Long approverId) {
+        log.info("内容审批通过: contentId={}, approverId={}", contentId, approverId);
+
+        Content content = contentRepository.findById(contentId)
+                .orElseThrow(() -> new RuntimeException("内容不存在"));
+
+        // 更新审批状态
+        content.setApprovalStatus("APPROVED");
+        content.setApprovedAt(LocalDateTime.now());
+        content.setApprovedBy(approverId);
+
+        // 自动发布
+        content.setStatus("PUBLISHED");
+        content.setPublishedAt(LocalDateTime.now());
+
+        contentRepository.save(content);
+        log.info("内容自动发布成功: id={}", contentId);
+    }
+
+    /**
+     * 审批拒绝回调
+     */
+    @Transactional
+    public void onApprovalRejected(Long contentId, String reason) {
+        log.info("内容审批拒绝: contentId={}, reason={}", contentId, reason);
+
+        Content content = contentRepository.findById(contentId)
+                .orElseThrow(() -> new RuntimeException("内容不存在"));
+
+        // 更新审批状态
+        content.setApprovalStatus("REJECTED");
+        content.setRejectReason(reason);
+
+        // 返回草稿状态
+        content.setStatus("DRAFT");
+
+        contentRepository.save(content);
+        log.info("内容返回草稿状态: id={}", contentId);
     }
 
     /**

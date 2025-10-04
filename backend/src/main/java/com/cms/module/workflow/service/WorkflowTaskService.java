@@ -6,10 +6,13 @@ import com.cms.module.user.repository.UserRepository;
 import com.cms.module.workflow.dto.ApproveTaskRequest;
 import com.cms.module.workflow.dto.RejectTaskRequest;
 import com.cms.module.workflow.dto.WorkflowTaskDTO;
+import com.cms.module.workflow.entity.WorkflowApprovalHistory;
 import com.cms.module.workflow.entity.WorkflowInstance;
 import com.cms.module.workflow.entity.WorkflowNode;
 import com.cms.module.workflow.entity.WorkflowTask;
+import com.cms.module.workflow.repository.WorkflowApprovalHistoryRepository;
 import com.cms.module.workflow.repository.WorkflowInstanceRepository;
+import com.cms.module.workflow.repository.WorkflowNodeRepository;
 import com.cms.module.workflow.repository.WorkflowTaskRepository;
 import com.cms.security.service.CustomUserDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -41,8 +44,11 @@ public class WorkflowTaskService {
 
     private final WorkflowTaskRepository taskRepository;
     private final WorkflowInstanceRepository instanceRepository;
+    private final WorkflowNodeRepository nodeRepository;
+    private final WorkflowApprovalHistoryRepository historyRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final org.springframework.context.ApplicationContext applicationContext;
 
     /**
      * 为节点创建任务
@@ -165,6 +171,9 @@ public class WorkflowTaskService {
         task.setProcessedAt(LocalDateTime.now());
         taskRepository.save(task);
 
+        // 记录审批历史
+        recordApprovalHistory(task, "APPROVE", request.getComment());
+
         // 检查节点的所有任务是否都已完成
         checkNodeCompletion(task.getInstanceId(), task.getNodeId());
     }
@@ -198,6 +207,9 @@ public class WorkflowTaskService {
         task.setProcessedAt(LocalDateTime.now());
         taskRepository.save(task);
 
+        // 记录审批历史
+        recordApprovalHistory(task, "REJECT", request.getComment());
+
         // 拒绝整个实例
         WorkflowInstance instance = instanceRepository.findById(task.getInstanceId())
                 .orElseThrow(() -> new BusinessException("工作流实例不存在"));
@@ -206,6 +218,9 @@ public class WorkflowTaskService {
         instance.setCompletedAt(LocalDateTime.now());
         instance.setCompletionNote("任务被拒绝: " + request.getComment());
         instanceRepository.save(instance);
+
+        // 业务回调 - 通知业务模块审批被拒绝
+        notifyBusinessRejected(instance, request.getComment());
 
         // 取消其他待办任务
         cancelTasksByInstanceId(task.getInstanceId());
@@ -235,7 +250,7 @@ public class WorkflowTaskService {
         log.debug("检查节点完成情况: instanceId={}, nodeId={}", instanceId, nodeId);
 
         List<WorkflowTask> tasks = taskRepository.findByInstanceIdAndDeletedFalseOrderByCreatedAtDesc(instanceId);
-        
+
         // 过滤出当前节点的任务
         List<WorkflowTask> nodeTasks = tasks.stream()
                 .filter(t -> t.getNodeId().equals(nodeId))
@@ -246,11 +261,116 @@ public class WorkflowTaskService {
                 .allMatch(t -> "APPROVED".equals(t.getStatus()));
 
         if (allApproved && !nodeTasks.isEmpty()) {
-            // 所有任务都已通过,移动到下一个节点
-            // 这里需要注入WorkflowInstanceService,但为了避免循环依赖,我们直接更新实例
             log.info("节点所有任务已完成,准备移动到下一个节点");
-            // 实际实现中应该调用WorkflowInstanceService.moveToNextNode
+
+            // 获取当前节点
+            WorkflowNode currentNode = nodeRepository.findById(nodeId)
+                    .orElseThrow(() -> new BusinessException("节点不存在"));
+
+            // 获取下一个节点
+            List<WorkflowNode> allNodes = nodeRepository.findByWorkflowIdAndDeletedFalseOrderBySortOrderAsc(currentNode.getWorkflowId());
+            WorkflowNode nextNode = null;
+            for (int i = 0; i < allNodes.size(); i++) {
+                if (allNodes.get(i).getId().equals(nodeId) && i < allNodes.size() - 1) {
+                    nextNode = allNodes.get(i + 1);
+                    break;
+                }
+            }
+
+            if (nextNode != null && "END".equals(nextNode.getNodeType())) {
+                // 到达结束节点,完成工作流
+                completeWorkflow(instanceId);
+            } else if (nextNode != null) {
+                // 移动到下一个节点
+                WorkflowInstance instance = instanceRepository.findById(instanceId)
+                        .orElseThrow(() -> new BusinessException("工作流实例不存在"));
+                instance.setCurrentNodeId(nextNode.getId());
+                instanceRepository.save(instance);
+
+                // 为下一个节点创建任务
+                createTasksForNode(instanceId, nextNode);
+            }
         }
+    }
+
+    /**
+     * 完成工作流
+     */
+    private void completeWorkflow(Long instanceId) {
+        log.info("完成工作流: instanceId={}", instanceId);
+
+        WorkflowInstance instance = instanceRepository.findById(instanceId)
+                .orElseThrow(() -> new BusinessException("工作流实例不存在"));
+
+        instance.setStatus("APPROVED");
+        instance.setCompletedAt(LocalDateTime.now());
+        instance.setCompletionNote("审批通过");
+        instanceRepository.save(instance);
+
+        // 业务回调 - 通知业务模块审批通过
+        notifyBusinessApproved(instance);
+    }
+
+    /**
+     * 通知业务模块审批通过
+     */
+    private void notifyBusinessApproved(WorkflowInstance instance) {
+        log.info("通知业务模块审批通过: businessType={}, businessId={}",
+                instance.getBusinessType(), instance.getBusinessId());
+
+        try {
+            if ("CONTENT".equals(instance.getBusinessType())) {
+                // 通知内容服务
+                com.cms.module.content.service.ContentService contentService =
+                    applicationContext.getBean(com.cms.module.content.service.ContentService.class);
+                contentService.onApprovalApproved(instance.getBusinessId(), getCurrentUserId());
+            }
+            // 可以添加其他业务类型的处理
+        } catch (Exception e) {
+            log.error("通知业务模块失败", e);
+        }
+    }
+
+    /**
+     * 通知业务模块审批拒绝
+     */
+    private void notifyBusinessRejected(WorkflowInstance instance, String reason) {
+        log.info("通知业务模块审批拒绝: businessType={}, businessId={}",
+                instance.getBusinessType(), instance.getBusinessId());
+
+        try {
+            if ("CONTENT".equals(instance.getBusinessType())) {
+                // 通知内容服务
+                com.cms.module.content.service.ContentService contentService =
+                    applicationContext.getBean(com.cms.module.content.service.ContentService.class);
+                contentService.onApprovalRejected(instance.getBusinessId(), reason);
+            }
+            // 可以添加其他业务类型的处理
+        } catch (Exception e) {
+            log.error("通知业务模块失败", e);
+        }
+    }
+
+    /**
+     * 记录审批历史
+     */
+    private void recordApprovalHistory(WorkflowTask task, String action, String comment) {
+        log.debug("记录审批历史: taskId={}, action={}", task.getId(), action);
+
+        WorkflowNode node = nodeRepository.findById(task.getNodeId()).orElse(null);
+
+        WorkflowApprovalHistory history = new WorkflowApprovalHistory();
+        history.setInstanceId(task.getInstanceId());
+        history.setTaskId(task.getId());
+        history.setNodeId(task.getNodeId());
+        history.setNodeName(node != null ? node.getName() : "未知节点");
+        history.setApproverId(task.getAssigneeId());
+        history.setApproverName(task.getAssigneeName());
+        history.setAction(action);
+        history.setComment(comment);
+        history.setCreatedAt(LocalDateTime.now());
+
+        historyRepository.save(history);
     }
 
     /**

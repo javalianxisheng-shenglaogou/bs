@@ -18,6 +18,11 @@ public interface WorkflowNodeRepository extends JpaRepository<WorkflowNode, Long
     List<WorkflowNode> findByWorkflowIdAndDeletedFalseOrderBySortOrder(Long workflowId);
 
     /**
+     * 根据工作流ID查找节点列表(按排序升序)
+     */
+    List<WorkflowNode> findByWorkflowIdAndDeletedFalseOrderBySortOrderAsc(Long workflowId);
+
+    /**
      * 根据工作流ID和节点类型查找节点
      */
     List<WorkflowNode> findByWorkflowIdAndNodeTypeAndDeletedFalse(Long workflowId, String nodeType);

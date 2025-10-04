@@ -159,5 +159,29 @@ public class ContentController {
         contentService.updateContentStatus(id, status);
         return ApiResponse.success(null);
     }
+
+    /**
+     * 提交审批
+     */
+    @PostMapping("/{id}/submit-approval")
+    @PreAuthorize("hasAuthority('content:create')")
+    @Operation(summary = "提交审批", description = "提交内容审批")
+    public ApiResponse<Void> submitApproval(@PathVariable Long id) {
+        log.info("提交内容审批请求: id={}", id);
+        contentService.submitApproval(id);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 撤回审批
+     */
+    @PostMapping("/{id}/withdraw-approval")
+    @PreAuthorize("hasAuthority('content:create')")
+    @Operation(summary = "撤回审批", description = "撤回内容审批")
+    public ApiResponse<Void> withdrawApproval(@PathVariable Long id) {
+        log.info("撤回内容审批请求: id={}", id);
+        contentService.withdrawApproval(id);
+        return ApiResponse.success(null);
+    }
 }
 

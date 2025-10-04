@@ -122,5 +122,41 @@ public class Content extends BaseEntity {
      */
     @Column(name = "is_original")
     private Boolean isOriginal = true;
+
+    /**
+     * 工作流实例ID
+     */
+    @Column(name = "workflow_instance_id")
+    private Long workflowInstanceId;
+
+    /**
+     * 审批状态: NONE-无需审批, PENDING-待审批, APPROVED-已通过, REJECTED-已拒绝
+     */
+    @Column(name = "approval_status", length = 20)
+    private String approvalStatus = "NONE";
+
+    /**
+     * 提交审批时间
+     */
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
+
+    /**
+     * 审批通过时间
+     */
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    /**
+     * 审批人ID
+     */
+    @Column(name = "approved_by")
+    private Long approvedBy;
+
+    /**
+     * 拒绝原因
+     */
+    @Column(name = "reject_reason", columnDefinition = "TEXT")
+    private String rejectReason;
 }
 
