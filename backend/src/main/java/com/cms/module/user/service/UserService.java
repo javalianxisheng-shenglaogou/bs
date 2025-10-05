@@ -2,6 +2,7 @@ package com.cms.module.user.service;
 
 import com.cms.common.exception.BusinessException;
 import com.cms.common.exception.ErrorCode;
+import com.cms.common.util.SecurityUtils;
 import com.cms.module.user.dto.UserCreateRequest;
 import com.cms.module.user.dto.UserDTO;
 import com.cms.module.user.dto.UserUpdateRequest;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -164,14 +166,28 @@ public class UserService {
     
     /**
      * 更新用户
+     * 权限检查：用户只能更新自己的信息，除非拥有user:update权限
      */
     @Transactional
     public UserDTO updateUser(Long id, UserUpdateRequest request) {
         log.info("更新用户: {}", id);
-        
+
+        // 权限检查：只能更新自己的信息，除非是管理员
+        Long currentUserId = SecurityUtils.getCurrentUserId();
+        boolean isAdmin = SecurityUtils.hasAuthority("user:update");
+
+        if (currentUserId == null) {
+            throw new AccessDeniedException("未登录");
+        }
+
+        if (!currentUserId.equals(id) && !isAdmin) {
+            log.warn("用户 {} 尝试更新其他用户 {} 的信息", currentUserId, id);
+            throw new AccessDeniedException("您只能更新自己的个人信息");
+        }
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        
+
         if (user.getDeleted()) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
