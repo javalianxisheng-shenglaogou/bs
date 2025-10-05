@@ -87,6 +87,69 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  /**
+   * 检查是否有指定权限
+   */
+  const hasPermission = (permission: string): boolean => {
+    const permissions = userInfo.value?.permissions || []
+    return permissions.includes(permission)
+  }
+
+  /**
+   * 检查是否有任意一个权限
+   */
+  const hasAnyPermission = (permissions: string[]): boolean => {
+    if (!permissions || permissions.length === 0) {
+      return true
+    }
+    return permissions.some(permission => hasPermission(permission))
+  }
+
+  /**
+   * 检查是否有所有权限
+   */
+  const hasAllPermissions = (permissions: string[]): boolean => {
+    if (!permissions || permissions.length === 0) {
+      return true
+    }
+    return permissions.every(permission => hasPermission(permission))
+  }
+
+  /**
+   * 检查是否有指定角色
+   */
+  const hasRole = (role: string): boolean => {
+    const roles = userInfo.value?.roles || []
+    return roles.includes(role)
+  }
+
+  /**
+   * 检查是否有任意一个角色
+   */
+  const hasAnyRole = (roles: string[]): boolean => {
+    if (!roles || roles.length === 0) {
+      return true
+    }
+    return roles.some(role => hasRole(role))
+  }
+
+  /**
+   * 检查是否有所有角色
+   */
+  const hasAllRoles = (roles: string[]): boolean => {
+    if (!roles || roles.length === 0) {
+      return true
+    }
+    return roles.every(role => hasRole(role))
+  }
+
+  /**
+   * 检查是否是管理员
+   */
+  const isAdmin = (): boolean => {
+    return hasRole('ADMIN') || hasRole('SUPER_ADMIN')
+  }
+
   return {
     token,
     userInfo,
@@ -94,7 +157,14 @@ export const useUserStore = defineStore('user', () => {
     setUserInfo,
     login,
     fetchUserInfo,
-    logout
+    logout,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    hasRole,
+    hasAnyRole,
+    hasAllRoles,
+    isAdmin
   }
 })
 

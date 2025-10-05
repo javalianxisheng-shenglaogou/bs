@@ -116,7 +116,7 @@ public class SiteController {
             @RequestParam(required = false) String domain,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Boolean isDefault,
-            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {

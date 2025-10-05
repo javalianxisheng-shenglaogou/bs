@@ -59,7 +59,7 @@ public class UserService {
         // 创建分页对象
         Sort sort = Sort.by("DESC".equalsIgnoreCase(sortOrder) ? Sort.Direction.DESC : Sort.Direction.ASC, 
                            StringUtils.hasText(sortBy) ? sortBy : "createdAt");
-        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
         
         // 创建查询条件
         Specification<User> spec = (root, query, cb) -> {

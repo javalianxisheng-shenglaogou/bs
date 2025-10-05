@@ -5,6 +5,8 @@ import pinia from '@/store'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import { setupPermissionDirective } from '@/directives/permission'
+import '@/styles/animations.css'
 
 const app = createApp(App)
 
@@ -12,6 +14,9 @@ const app = createApp(App)
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)
 }
+
+// 注册权限指令
+setupPermissionDirective(app)
 
 app.use(router)
 app.use(pinia)

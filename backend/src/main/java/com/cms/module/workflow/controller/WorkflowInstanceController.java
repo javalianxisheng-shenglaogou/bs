@@ -56,7 +56,7 @@ public class WorkflowInstanceController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "分页查询实例", description = "根据条件分页查询工作流实例列表")
     public ApiResponse<Page<WorkflowInstanceDTO>> getInstances(
-            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {

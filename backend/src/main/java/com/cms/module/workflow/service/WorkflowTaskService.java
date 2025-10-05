@@ -99,7 +99,7 @@ public class WorkflowTaskService {
         Long currentUserId = getCurrentUserId();
         
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         List<String> pendingStatuses = Arrays.asList("PENDING", "IN_PROGRESS");
         Page<WorkflowTask> taskPage = taskRepository.findByAssigneeIdAndStatusInAndDeletedFalse(
@@ -117,7 +117,7 @@ public class WorkflowTaskService {
         Long currentUserId = getCurrentUserId();
         
         Sort sort = Sort.by(Sort.Direction.DESC, "processedAt");
-        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         List<String> pendingStatuses = Arrays.asList("PENDING", "IN_PROGRESS");
         Page<WorkflowTask> taskPage = taskRepository.findByAssigneeIdAndStatusNotInAndDeletedFalse(

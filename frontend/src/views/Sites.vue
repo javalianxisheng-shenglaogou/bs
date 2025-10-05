@@ -287,10 +287,17 @@ const formRules: FormRules = {
 const loadSites = async () => {
   loading.value = true
   try {
-    const data = await getAllSitesApi()
-    siteList.value = data
+    const response = await getAllSitesApi()
+    console.log('✅ 站点列表响应:', response)
+    if (response.code === 200 && response.data) {
+      siteList.value = Array.isArray(response.data) ? response.data : []
+    } else {
+      siteList.value = []
+      ElMessage.error(response.message || '加载站点列表失败')
+    }
   } catch (error: any) {
-    console.error('加载站点列表失败:', error)
+    console.error('❌ 加载站点列表失败:', error)
+    siteList.value = []
     ElMessage.error(error.message || '加载站点列表失败')
   } finally {
     loading.value = false
@@ -463,6 +470,21 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.sites {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -473,6 +495,31 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.site-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.site-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.site-card:hover::before {
+  transform: scaleX(1);
 }
 
 .site-card :deep(.el-card__body) {
@@ -487,38 +534,79 @@ onMounted(() => {
 }
 
 .site-name {
-  font-size: 16px;
-  font-weight: bold;
+  font-size: 18px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .site-logo {
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #f5f7fa;
+  border-radius: 8px;
 }
 
 .site-logo img {
   max-width: 100%;
   max-height: 80px;
   object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.site-card:hover .site-logo img {
+  transform: scale(1.05);
 }
 
 .site-info p {
-  margin: 8px 0;
+  margin: 12px 0;
   color: #606266;
+  font-size: 14px;
+}
+
+.site-info strong {
+  color: #303133;
+  font-weight: 600;
 }
 
 .site-info a {
   color: #409eff;
   text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
-.site-info a:hover {
-  text-decoration: underline;
+.site-info a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #409eff;
+  transition: width 0.3s ease;
+}
+
+.site-info a:hover::after {
+  width: 100%;
 }
 
 .site-actions {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
+}
+
+.site-actions .el-button {
+  flex: 1;
+  transition: all 0.3s ease;
+}
+
+.site-actions .el-button:hover {
+  transform: translateY(-2px);
 }
 
 .logo-uploader,

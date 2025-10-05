@@ -2,6 +2,7 @@ package com.cms.module.user.repository;
 
 import com.cms.module.user.entity.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -10,7 +11,7 @@ import java.util.Optional;
  * 角色Repository
  */
 @Repository
-public interface RoleRepository extends JpaRepository<Role, Long> {
+public interface RoleRepository extends JpaRepository<Role, Long>, JpaSpecificationExecutor<Role> {
 
     /**
      * 根据角色代码查询角色

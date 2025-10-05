@@ -1,4 +1,5 @@
-import request from '@/utils/request'
+import { request } from '@/utils/request'
+import type { PageData } from '@/types/api'
 
 /**
  * 内容接口
@@ -69,7 +70,7 @@ export interface PageResponse<T> {
  * 获取内容列表(分页)
  */
 export const getContentsApi = (params?: ContentQueryParams) => {
-  return request<PageResponse<Content>>({
+  return request<PageData<Content>>({
     url: '/contents',
     method: 'get',
     params
@@ -151,12 +152,31 @@ export const updateContentStatusApi = (id: number, status: string) => {
 }
 
 /**
- * 提交审批
+ * 提交审批（简单版本）
  */
 export const submitApprovalApi = (id: number) => {
   return request({
     url: `/contents/${id}/submit-approval`,
     method: 'post'
+  })
+}
+
+/**
+ * 提交审批（带选项）
+ */
+export interface SubmitApprovalOptions {
+  contentId: number
+  workflowCode: string
+  approvalMode: 'SERIAL' | 'PARALLEL'
+  approverIds: number[]
+  comment?: string
+}
+
+export const submitApprovalWithOptionsApi = (data: SubmitApprovalOptions) => {
+  return request({
+    url: `/contents/${data.contentId}/submit-approval-with-options`,
+    method: 'post',
+    data
   })
 }
 

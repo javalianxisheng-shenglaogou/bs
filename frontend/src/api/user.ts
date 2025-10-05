@@ -1,4 +1,5 @@
-import request from '@/utils/request'
+import { request } from '@/utils/request'
+import type { PageData } from '@/types/api'
 
 /**
  * 用户信息
@@ -79,7 +80,7 @@ export function getUserList(params: {
   sortBy?: string
   sortOrder?: string
 }) {
-  return request<PageResponse<User>>({
+  return request<PageData<User>>({
     url: '/users',
     method: 'get',
     params

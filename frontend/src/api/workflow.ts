@@ -1,4 +1,5 @@
-import request from '@/utils/request'
+import { request } from '@/utils/request'
+import type { PageData } from '@/types/api'
 
 /**
  * 工作流API
@@ -72,7 +73,7 @@ export function getAllWorkflowsApi() {
  * 分页查询工作流
  */
 export function getWorkflowsApi(params: any) {
-  return request({
+  return request<PageData<any>>({
     url: '/workflows',
     method: 'get',
     params

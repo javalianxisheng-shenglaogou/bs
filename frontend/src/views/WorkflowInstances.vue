@@ -72,13 +72,13 @@
 
       <!-- 分页 -->
       <el-pagination
-        v-model:current-page="pagination.page"
+        :current-page="pagination.page + 1"
         v-model:page-size="pagination.size"
         :total="pagination.total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="loadInstances"
-        @current-change="loadInstances"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
         style="margin-top: 20px; justify-content: flex-end"
       />
     </el-card>
@@ -129,7 +129,7 @@ const loading = ref(false)
 
 // 分页
 const pagination = reactive({
-  page: 1,
+  page: 0,  // 从0开始，匹配后端分页
   size: 10,
   total: 0
 })
@@ -141,25 +141,54 @@ const currentInstance = ref<any>(null)
 // 加载实例列表
 const loadInstances = async () => {
   loading.value = true
+  console.log('🔍 开始加载工作流实例，参数:', {
+    page: pagination.page,
+    size: pagination.size,
+    ...searchForm
+  })
+
   try {
-    const data = await getInstancesApi({
+    const response = await getInstancesApi({
       page: pagination.page,
       size: pagination.size,
       ...searchForm
     })
-    instanceList.value = data.content
-    pagination.total = data.totalElements
+    console.log('✅ 工作流实例响应:', response)
+
+    if (response.code === 200 && response.data) {
+      instanceList.value = Array.isArray(response.data.content) ? response.data.content : []
+      pagination.total = response.data.totalElements || 0
+      console.log(`✅ 加载成功: ${instanceList.value.length}条数据，总数: ${pagination.total}`)
+    } else {
+      instanceList.value = []
+      pagination.total = 0
+      ElMessage.error(response.message || '加载实例列表失败')
+    }
   } catch (error: any) {
-    console.error('加载实例列表失败:', error)
+    console.error('❌ 加载实例列表失败:', error)
+    instanceList.value = []
+    pagination.total = 0
     ElMessage.error(error.message || '加载实例列表失败')
   } finally {
     loading.value = false
   }
 }
 
+// 分页处理
+const handlePageChange = (page: number) => {
+  pagination.page = page - 1  // Element Plus从1开始，转换为从0开始
+  loadInstances()
+}
+
+const handleSizeChange = (size: number) => {
+  pagination.size = size
+  pagination.page = 0  // 改变每页大小时重置到第一页
+  loadInstances()
+}
+
 // 搜索
 const handleSearch = () => {
-  pagination.page = 1
+  pagination.page = 0  // 搜索时重置到第一页
   loadInstances()
 }
 
@@ -167,7 +196,7 @@ const handleSearch = () => {
 const handleReset = () => {
   searchForm.businessTitle = ''
   searchForm.status = ''
-  pagination.page = 1
+  pagination.page = 0  // 重置时回到第一页
   loadInstances()
 }
 

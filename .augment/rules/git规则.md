@@ -12,6 +12,7 @@ type: "manual"
 
 传统的 Git 提交信息主要是写给人看的，而本工作流引入了 **"Commit-as-Prompt"** 的概念，通过为 AI 设定一个 **“Commit-to-Prompt Engineer”** 的角色，将提交信息的撰写过程，转变为构建 AI 问题上下文的过程。
 
+我的git仓库地址是: https://gitee.com/jiuxias-da/multi-site-hub.git
 ## 关键结构：WHAT / WHY / HOW
 
 为了让提交信息变得结构化且信息丰富，本工作流强制要求每个核心提交都必须清晰地阐述三个关键问题：

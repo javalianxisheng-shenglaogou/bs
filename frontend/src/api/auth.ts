@@ -1,4 +1,4 @@
-import request from '../utils/request'
+import { request } from '../utils/request'
 
 /**
  * 登录请求参数
@@ -6,6 +6,18 @@ import request from '../utils/request'
 export interface LoginRequest {
   username: string
   password: string
+}
+
+/**
+ * 注册请求参数
+ */
+export interface RegisterRequest {
+  username: string
+  email: string
+  mobile?: string
+  password: string
+  confirmPassword: string
+  nickname?: string
 }
 
 /**
@@ -49,6 +61,17 @@ export interface UserInfo {
 export function login(data: LoginRequest) {
   return request<LoginResponse>({
     url: '/auth/login',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 用户注册
+ */
+export function register(data: RegisterRequest) {
+  return request<LoginResponse>({
+    url: '/auth/register',
     method: 'post',
     data
   })

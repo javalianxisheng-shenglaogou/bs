@@ -152,7 +152,7 @@ public class WorkflowInstanceService {
                 sortBy
         );
 
-        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
         Page<WorkflowInstance> instancePage = instanceRepository.findAll(pageable);
 
         return instancePage.map(instance -> {

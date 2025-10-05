@@ -206,8 +206,8 @@ public class SiteService {
                 queryDTO.getSortBy()
         );
 
-        // 构建分页
-        Pageable pageable = PageRequest.of(queryDTO.getPage() - 1, queryDTO.getSize(), sort);
+        // 构建分页（前端传递的page从0开始，Spring Data JPA也是从0开始）
+        Pageable pageable = PageRequest.of(queryDTO.getPage(), queryDTO.getSize(), sort);
 
         // 构建查询条件
         Specification<Site> spec = (root, query, cb) -> {

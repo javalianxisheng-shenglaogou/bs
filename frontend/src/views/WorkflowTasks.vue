@@ -38,13 +38,13 @@
           </el-table>
 
           <el-pagination
-            v-model:current-page="pendingPage"
+            :current-page="pendingPage + 1"
             v-model:page-size="pendingPageSize"
             :total="pendingTotal"
             :page-sizes="[10, 20, 50, 100]"
             layout="total, sizes, prev, pager, next, jumper"
-            @size-change="loadPendingTasks"
-            @current-change="loadPendingTasks"
+            @size-change="handlePendingSizeChange"
+            @current-change="handlePendingPageChange"
             style="margin-top: 20px; justify-content: flex-end"
           />
         </el-tab-pane>
@@ -85,13 +85,13 @@
           </el-table>
 
           <el-pagination
-            v-model:current-page="completedPage"
+            :current-page="completedPage + 1"
             v-model:page-size="completedPageSize"
             :total="completedTotal"
             :page-sizes="[10, 20, 50, 100]"
             layout="total, sizes, prev, pager, next, jumper"
-            @size-change="loadCompletedTasks"
-            @current-change="loadCompletedTasks"
+            @size-change="handleCompletedSizeChange"
+            @current-change="handleCompletedPageChange"
             style="margin-top: 20px; justify-content: flex-end"
           />
         </el-tab-pane>
@@ -169,13 +169,13 @@ const activeTab = ref('pending')
 
 // 待办任务
 const pendingTasks = ref<any[]>([])
-const pendingPage = ref(1)
+const pendingPage = ref(0)  // 从0开始，匹配后端分页
 const pendingPageSize = ref(10)
 const pendingTotal = ref(0)
 
 // 已办任务
 const completedTasks = ref<any[]>([])
-const completedPage = ref(1)
+const completedPage = ref(0)  // 从0开始，匹配后端分页
 const completedPageSize = ref(10)
 const completedTotal = ref(0)
 
@@ -197,15 +197,34 @@ const detailDialogVisible = ref(false)
 // 加载待办任务
 const loadPendingTasks = async () => {
   loading.value = true
+  console.log('🔍 开始加载待办任务，参数:', {
+    page: pendingPage.value,
+    size: pendingPageSize.value
+  })
+
   try {
-    const data = await getMyPendingTasksApi({
+    const response = await getMyPendingTasksApi({
       page: pendingPage.value,
       size: pendingPageSize.value
     })
-    pendingTasks.value = data.content
-    pendingTotal.value = data.totalElements
+    console.log('✅ 待办任务响应:', response)
+
+    if (response.code === 200 && response.data) {
+      pendingTasks.value = Array.isArray(response.data.content) ? response.data.content : []
+      pendingTotal.value = response.data.totalElements || 0
+      console.log('✅ 待办任务加载成功:', {
+        total: pendingTotal.value,
+        count: pendingTasks.value.length
+      })
+    } else {
+      pendingTasks.value = []
+      pendingTotal.value = 0
+      ElMessage.error(response.message || '加载待办任务失败')
+    }
   } catch (error: any) {
-    console.error('加载待办任务失败:', error)
+    console.error('❌ 加载待办任务失败:', error)
+    pendingTasks.value = []
+    pendingTotal.value = 0
     ElMessage.error(error.message || '加载待办任务失败')
   } finally {
     loading.value = false
@@ -215,19 +234,62 @@ const loadPendingTasks = async () => {
 // 加载已办任务
 const loadCompletedTasks = async () => {
   loading.value = true
+  console.log('🔍 开始加载已办任务，参数:', {
+    page: completedPage.value,
+    size: completedPageSize.value
+  })
+
   try {
-    const data = await getMyCompletedTasksApi({
+    const response = await getMyCompletedTasksApi({
       page: completedPage.value,
       size: completedPageSize.value
     })
-    completedTasks.value = data.content
-    completedTotal.value = data.totalElements
+    console.log('✅ 已办任务响应:', response)
+
+    if (response.code === 200 && response.data) {
+      completedTasks.value = Array.isArray(response.data.content) ? response.data.content : []
+      completedTotal.value = response.data.totalElements || 0
+      console.log('✅ 已办任务加载成功:', {
+        total: completedTotal.value,
+        count: completedTasks.value.length
+      })
+    } else {
+      completedTasks.value = []
+      completedTotal.value = 0
+      ElMessage.error(response.message || '加载已办任务失败')
+    }
   } catch (error: any) {
-    console.error('加载已办任务失败:', error)
+    console.error('❌ 加载已办任务失败:', error)
+    completedTasks.value = []
+    completedTotal.value = 0
     ElMessage.error(error.message || '加载已办任务失败')
   } finally {
     loading.value = false
   }
+}
+
+// 待办任务分页处理
+const handlePendingPageChange = (page: number) => {
+  pendingPage.value = page - 1  // Element Plus从1开始，转换为从0开始
+  loadPendingTasks()
+}
+
+const handlePendingSizeChange = (size: number) => {
+  pendingPageSize.value = size
+  pendingPage.value = 0  // 改变每页大小时重置到第一页
+  loadPendingTasks()
+}
+
+// 已办任务分页处理
+const handleCompletedPageChange = (page: number) => {
+  completedPage.value = page - 1  // Element Plus从1开始，转换为从0开始
+  loadCompletedTasks()
+}
+
+const handleCompletedSizeChange = (size: number) => {
+  completedPageSize.value = size
+  completedPage.value = 0  // 改变每页大小时重置到第一页
+  loadCompletedTasks()
 }
 
 // 标签页切换

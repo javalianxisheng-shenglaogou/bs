@@ -5,14 +5,12 @@
         <div class="card-header">
           <span>系统日志</span>
           <div class="header-actions">
-            <el-button type="danger" @click="handleClear" :disabled="selectedIds.length === 0">
-              <el-icon><Delete /></el-icon>
-              批量删除
-            </el-button>
-            <el-button type="warning" @click="showClearDialog = true">
-              <el-icon><Delete /></el-icon>
-              清空日志
-            </el-button>
+            <el-tooltip content="日志文件为只读，不支持删除操作" placement="top">
+              <el-button type="info" disabled>
+                <el-icon><Delete /></el-icon>
+                删除功能已禁用
+              </el-button>
+            </el-tooltip>
           </div>
         </div>
       </template>
@@ -75,11 +73,9 @@
       <el-table
         :data="logList"
         v-loading="loading"
-        @selection-change="handleSelectionChange"
         stripe
         style="width: 100%"
       >
-        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="module" label="模块" width="100">
@@ -118,7 +114,7 @@
       <!-- 分页 -->
       <div class="pagination">
         <el-pagination
-          v-model:current-page="pagination.page"
+          :current-page="pagination.page + 1"
           v-model:page-size="pagination.size"
           :page-sizes="[10, 20, 50, 100]"
           :total="pagination.total"
@@ -163,58 +159,21 @@
         <el-descriptions-item label="创建时间" :span="2">{{ currentLog.createdAt }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
-
-    <!-- 清空日志对话框 -->
-    <el-dialog v-model="showClearDialog" title="清空日志" width="500px">
-      <el-form :model="clearForm" label-width="100px">
-        <el-form-item label="日志级别">
-          <el-select v-model="clearForm.level" placeholder="请选择级别(可选)" clearable>
-            <el-option label="INFO" value="INFO" />
-            <el-option label="WARN" value="WARN" />
-            <el-option label="ERROR" value="ERROR" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="时间范围">
-          <el-date-picker
-            v-model="clearDateRange"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
-            format="YYYY-MM-DD HH:mm:ss"
-            value-format="YYYY-MM-DD HH:mm:ss"
-          />
-        </el-form-item>
-        <el-alert
-          title="警告：清空操作不可恢复，请谨慎操作！"
-          type="warning"
-          :closable="false"
-          show-icon
-        />
-      </el-form>
-      <template #footer>
-        <el-button @click="showClearDialog = false">取消</el-button>
-        <el-button type="danger" @click="handleConfirmClear">确定清空</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Search, Refresh, Delete } from '@element-plus/icons-vue'
-import { getLogsApi, deleteLogsApi, clearLogsApi, type SystemLog } from '@/api/log'
+import { getLogsApi, type SystemLog } from '@/api/log'
 
 // 响应式数据
 const loading = ref(false)
 const logList = ref<SystemLog[]>([])
-const selectedIds = ref<number[]>([])
 const detailDialogVisible = ref(false)
-const showClearDialog = ref(false)
 const currentLog = ref<SystemLog>({} as SystemLog)
 const dateRange = ref<string[]>([])
-const clearDateRange = ref<string[]>([])
 
 // 搜索表单
 const searchForm = reactive({
@@ -224,16 +183,9 @@ const searchForm = reactive({
   isSuccess: undefined as boolean | undefined
 })
 
-// 清空表单
-const clearForm = reactive({
-  level: '',
-  startTime: '',
-  endTime: ''
-})
-
 // 分页
 const pagination = reactive({
-  page: 1,
+  page: 0,  // 从0开始，匹配后端分页
   size: 10,
   total: 0
 })
@@ -241,6 +193,12 @@ const pagination = reactive({
 // 加载日志列表
 const loadLogs = async () => {
   loading.value = true
+  console.log('🔍 开始加载日志列表，参数:', {
+    page: pagination.page,
+    size: pagination.size,
+    ...searchForm
+  })
+
   try {
     const params: any = {
       ...searchForm,
@@ -253,11 +211,21 @@ const loadLogs = async () => {
       params.endTime = dateRange.value[1]
     }
 
-    const data = await getLogsApi(params)
-    logList.value = data.content
-    pagination.total = data.total
+    const response = await getLogsApi(params)
+    console.log('✅ 日志列表响应:', response)
+
+    if (response.code === 200 && response.data) {
+      logList.value = Array.isArray(response.data.content) ? response.data.content : []
+      pagination.total = response.data.totalElements || 0
+    } else {
+      logList.value = []
+      pagination.total = 0
+      ElMessage.error(response.message || '加载日志列表失败')
+    }
   } catch (error: any) {
-    console.error('加载日志列表失败:', error)
+    console.error('❌ 加载日志列表失败:', error)
+    logList.value = []
+    pagination.total = 0
     ElMessage.error(error.message || '加载日志列表失败')
   } finally {
     loading.value = false
@@ -266,7 +234,7 @@ const loadLogs = async () => {
 
 // 搜索
 const handleSearch = () => {
-  pagination.page = 1
+  pagination.page = 0  // 重置到第一页（从0开始）
   loadLogs()
 }
 
@@ -277,7 +245,7 @@ const handleReset = () => {
   searchForm.level = ''
   searchForm.isSuccess = undefined
   dateRange.value = []
-  pagination.page = 1
+  pagination.page = 0  // 重置到第一页（从0开始）
   loadLogs()
 }
 
@@ -287,62 +255,15 @@ const handleView = (log: SystemLog) => {
   detailDialogVisible.value = true
 }
 
-// 选择变化
-const handleSelectionChange = (selection: SystemLog[]) => {
-  selectedIds.value = selection.map(item => item.id!).filter(id => id !== undefined)
-}
-
-// 批量删除
-const handleClear = async () => {
-  try {
-    await ElMessageBox.confirm('确定要删除选中的日志吗？', '警告', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-
-    await deleteLogsApi(selectedIds.value)
-    ElMessage.success('删除成功')
-    await loadLogs()
-  } catch (error: any) {
-    if (error !== 'cancel') {
-      console.error('删除日志失败:', error)
-      ElMessage.error(error.message || '删除日志失败')
-    }
-  }
-}
-
-// 确认清空
-const handleConfirmClear = async () => {
-  try {
-    const params: any = {
-      level: clearForm.level
-    }
-
-    if (clearDateRange.value && clearDateRange.value.length === 2) {
-      params.startTime = clearDateRange.value[0]
-      params.endTime = clearDateRange.value[1]
-    }
-
-    await clearLogsApi(params)
-    ElMessage.success('清空成功')
-    showClearDialog.value = false
-    await loadLogs()
-  } catch (error: any) {
-    console.error('清空日志失败:', error)
-    ElMessage.error(error.message || '清空日志失败')
-  }
-}
-
 // 分页变化
 const handlePageChange = (page: number) => {
-  pagination.page = page
+  pagination.page = page - 1  // Element Plus从1开始，转换为从0开始
   loadLogs()
 }
 
 const handleSizeChange = (size: number) => {
   pagination.size = size
-  pagination.page = 1
+  pagination.page = 0  // 重置到第一页（从0开始）
   loadLogs()
 }
 
@@ -389,10 +310,27 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.logs {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .header-actions {
@@ -423,6 +361,37 @@ pre {
 .error-message {
   color: #f56c6c;
   background-color: #fef0f0;
+}
+
+/* 表格优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table__header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+:deep(.el-table__header th) {
+  background: transparent;
+  color: white;
+  font-weight: 600;
+}
+
+:deep(.el-table__row) {
+  transition: all 0.3s ease;
+}
+
+:deep(.el-table__row:hover) {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 标签优化 */
+:deep(.el-tag) {
+  border-radius: 4px;
+  font-weight: 500;
 }
 </style>
 

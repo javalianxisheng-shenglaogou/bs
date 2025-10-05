@@ -16,7 +16,7 @@
               v-for="site in siteList"
               :key="site.id"
               :label="site.name"
-              :value="site.id"
+              :value="site.id || 0"
             />
           </el-select>
         </el-form-item>
@@ -117,7 +117,7 @@
                   v-for="site in siteList"
                   :key="site.id"
                   :label="site.name"
-                  :value="site.id"
+                  :value="site.id || 0"
                 />
               </el-select>
             </el-form-item>
@@ -268,7 +268,7 @@ const siteList = ref<Site[]>([])
 const activeTab = ref('basic')
 
 // 上传配置
-const uploadUrl = computed(() => `${import.meta.env.VITE_API_BASE_URL}/files/upload/category`)
+const uploadUrl = computed(() => '/api/files/upload/category')
 const uploadHeaders = computed(() => ({
   Authorization: `Bearer ${userStore.token}`
 }))
@@ -307,13 +307,20 @@ const formRules: FormRules = {
 // 加载站点列表
 const loadSites = async () => {
   try {
-    const data = await getAllSitesApi()
-    siteList.value = data
-    if (siteList.value.length > 0 && !selectedSite.value) {
-      selectedSite.value = siteList.value[0].id
+    const response = await getAllSitesApi()
+    console.log('✅ 站点列表响应:', response)
+    if (response.code === 200 && response.data) {
+      siteList.value = Array.isArray(response.data) ? response.data : []
+      if (siteList.value.length > 0 && !selectedSite.value) {
+        selectedSite.value = siteList.value[0].id
+      }
+    } else {
+      siteList.value = []
+      ElMessage.error(response.message || '加载站点列表失败')
     }
   } catch (error: any) {
-    console.error('加载站点列表失败:', error)
+    console.error('❌ 加载站点列表失败:', error)
+    siteList.value = []
     ElMessage.error(error.message || '加载站点列表失败')
   }
 }
@@ -326,12 +333,25 @@ const loadCategoryTree = async () => {
   }
 
   loading.value = true
+  console.log('🔍 开始加载分类树，站点ID:', selectedSite.value)
+
   try {
-    const data = await getCategoryTreeApi(selectedSite.value)
-    categoryTree.value = data
-    categoryTreeOptions.value = data
+    const response = await getCategoryTreeApi(selectedSite.value)
+    console.log('✅ 分类树响应:', response)
+
+    if (response.code === 200 && response.data) {
+      categoryTree.value = Array.isArray(response.data) ? response.data : []
+      categoryTreeOptions.value = Array.isArray(response.data) ? response.data : []
+      console.log('✅ 分类树加载成功，数量:', categoryTree.value.length)
+    } else {
+      categoryTree.value = []
+      categoryTreeOptions.value = []
+      ElMessage.error(response.message || '加载分类树失败')
+    }
   } catch (error: any) {
-    console.error('加载分类树失败:', error)
+    console.error('❌ 加载分类树失败:', error)
+    categoryTree.value = []
+    categoryTreeOptions.value = []
     ElMessage.error(error.message || '加载分类树失败')
   } finally {
     loading.value = false
@@ -510,14 +530,63 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 页面动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+:deep(.el-card) {
+  animation: fadeIn 0.5s ease-in;
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .filter-form {
   margin-bottom: 20px;
+}
+
+/* 表格优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table__header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+:deep(.el-table__header th) {
+  background: transparent;
+  color: white;
+  font-weight: 600;
+}
+
+:deep(.el-table__row) {
+  transition: all 0.3s ease;
+}
+
+:deep(.el-table__row:hover) {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 标签优化 */
+:deep(.el-tag) {
+  border-radius: 4px;
+  font-weight: 500;
 }
 
 /* 图标上传样式 */

@@ -155,8 +155,8 @@ public class ContentService {
                 queryDTO.getSortBy()
         );
 
-        // 构建分页（页码从1开始，需要转换为从0开始）
-        Pageable pageable = PageRequest.of(queryDTO.getPage() - 1, queryDTO.getSize(), sort);
+        // 构建分页（前端传递的page从0开始，Spring Data JPA也是从0开始）
+        Pageable pageable = PageRequest.of(queryDTO.getPage(), queryDTO.getSize(), sort);
 
         // 构建查询条件
         Specification<Content> spec = (root, query, cb) -> {
@@ -299,6 +299,48 @@ public class ContentService {
         contentRepository.save(content);
 
         log.info("内容审批提交成功: id={}, instanceId={}", id, instance.getId());
+    }
+
+    /**
+     * 提交审批（带选项）
+     */
+    @Transactional
+    public void submitApprovalWithOptions(Long id, com.cms.module.content.dto.SubmitApprovalOptionsDTO options) {
+        log.info("提交内容审批（带选项）: id={}, options={}", id, options);
+
+        Content content = contentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("内容不存在"));
+
+        if (!"DRAFT".equals(content.getStatus())) {
+            throw new RuntimeException("只有草稿状态的内容才能提交审批");
+        }
+
+        if ("PENDING".equals(content.getApprovalStatus())) {
+            throw new RuntimeException("内容已在审批中");
+        }
+
+        // 启动工作流
+        com.cms.module.workflow.service.WorkflowInstanceService workflowService =
+            applicationContext.getBean(com.cms.module.workflow.service.WorkflowInstanceService.class);
+
+        com.cms.module.workflow.dto.StartWorkflowRequest request = new com.cms.module.workflow.dto.StartWorkflowRequest();
+        request.setWorkflowCode(options.getWorkflowCode());
+        request.setBusinessType("CONTENT");
+        request.setBusinessId(id);
+        request.setBusinessTitle(content.getTitle());
+        request.setApprovalMode(options.getApprovalMode());
+        request.setApproverIds(options.getApproverIds());
+        request.setComment(options.getComment());
+
+        com.cms.module.workflow.dto.WorkflowInstanceDTO instance = workflowService.startWorkflow(request);
+
+        // 更新内容状态
+        content.setWorkflowInstanceId(instance.getId());
+        content.setApprovalStatus("PENDING");
+        content.setSubmittedAt(LocalDateTime.now());
+        contentRepository.save(content);
+
+        log.info("内容审批提交成功（带选项）: id={}, instanceId={}", id, instance.getId());
     }
 
     /**

@@ -10,7 +10,7 @@
                 v-for="site in siteList"
                 :key="site.id"
                 :label="site.name"
-                :value="site.id"
+                :value="site.id || 0"
               />
             </el-select>
             <el-select v-model="selectedStatus" placeholder="状态" clearable style="width: 120px; margin-right: 10px">
@@ -64,13 +64,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180" />
-        <el-table-column label="操作" width="350" fixed="right">
+        <el-table-column label="操作" width="400" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
 
-            <!-- 提交审批按钮 -->
+            <!-- 提交审批按钮 - 草稿状态且未提交审批 -->
             <el-button
-              v-if="row.status === 'DRAFT' && row.approvalStatus === 'NONE'"
+              v-if="row.status === 'DRAFT' && (!row.approvalStatus || row.approvalStatus === 'NONE')"
               type="success"
               size="small"
               @click="handleSubmitApproval(row)"
@@ -78,7 +78,7 @@
               提交审批
             </el-button>
 
-            <!-- 撤回审批按钮 -->
+            <!-- 撤回审批按钮 - 审批中 -->
             <el-button
               v-if="row.approvalStatus === 'PENDING'"
               type="warning"
@@ -88,7 +88,7 @@
               撤回审批
             </el-button>
 
-            <!-- 直接发布按钮(仅管理员) -->
+            <!-- 直接发布按钮 - 管理员或审批通过 -->
             <el-button
               v-if="row.status !== 'PUBLISHED' && row.approvalStatus !== 'PENDING'"
               type="success"
@@ -98,9 +98,17 @@
               发布
             </el-button>
 
-            <el-button type="warning" size="small" @click="handleUnpublish(row)" v-if="row.status === 'PUBLISHED'">
+            <!-- 下线按钮 -->
+            <el-button
+              v-if="row.status === 'PUBLISHED'"
+              type="warning"
+              size="small"
+              @click="handleUnpublish(row)"
+            >
               下线
             </el-button>
+
+            <!-- 删除按钮 -->
             <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -109,7 +117,7 @@
       <!-- 分页 -->
       <div class="pagination">
         <el-pagination
-          v-model:current-page="currentPage"
+          :current-page="currentPage + 1"
           v-model:page-size="pageSize"
           :page-sizes="[10, 20, 50, 100]"
           :total="total"
@@ -213,6 +221,14 @@
         <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 提交审批对话框 -->
+    <SubmitApprovalDialog
+      v-model:visible="submitApprovalDialogVisible"
+      :content-id="currentContent?.id || 0"
+      :content-title="currentContent?.title || ''"
+      @success="handleSubmitApprovalSuccess"
+    />
   </div>
 </template>
 
@@ -233,6 +249,7 @@ import {
 import { getAllSitesApi, type Site } from '@/api/site'
 import { useUserStore } from '@/store/user'
 import RichTextEditor from '@/components/RichTextEditor.vue'
+import SubmitApprovalDialog from '@/components/SubmitApprovalDialog.vue'
 
 const userStore = useUserStore()
 
@@ -247,7 +264,7 @@ const loading = ref(false)
 const selectedSite = ref<number | undefined>(undefined)
 const selectedStatus = ref('')
 const contentList = ref<Content[]>([])
-const currentPage = ref(1)
+const currentPage = ref(0)  // 从0开始，匹配后端分页
 const pageSize = ref(10)
 const total = ref(0)
 const dialogVisible = ref(false)
@@ -255,6 +272,8 @@ const dialogTitle = ref('新增内容')
 const formRef = ref<FormInstance>()
 const isEdit = ref(false)
 const siteList = ref<Site[]>([])
+const submitApprovalDialogVisible = ref(false)
+const currentContent = ref<Content | null>(null)
 
 // 表单数据
 const formData = reactive<Content>({
@@ -289,19 +308,32 @@ const formRules: FormRules = {
 // 加载站点列表
 const loadSites = async () => {
   try {
-    const data = await getAllSitesApi()
-    // 过滤掉undefined的项
-    siteList.value = (data || []).filter(site => site && site.id)
+    const response = await getAllSitesApi()
+    console.log('✅ 站点列表响应:', response)
+    // response是 {code, message, data} 格式
+    if (response.code === 200 && response.data) {
+      siteList.value = (Array.isArray(response.data) ? response.data : []).filter(site => site && site.id)
+    } else {
+      siteList.value = []
+    }
   } catch (error: any) {
-    console.error('加载站点列表失败:', error)
+    console.error('❌ 加载站点列表失败:', error)
+    siteList.value = []
   }
 }
 
 // 加载内容列表
 const loadContents = async () => {
   loading.value = true
+  console.log('🔍 开始加载内容列表，参数:', {
+    siteId: selectedSite.value,
+    status: selectedStatus.value,
+    page: currentPage.value,
+    size: pageSize.value
+  })
+
   try {
-    const data = await getContentsApi({
+    const response = await getContentsApi({
       siteId: selectedSite.value,
       status: selectedStatus.value || undefined,
       page: currentPage.value,
@@ -309,10 +341,26 @@ const loadContents = async () => {
       sortBy: 'createdAt',
       sortDir: 'desc'
     })
-    contentList.value = data.content
-    total.value = data.total
+    console.log('✅ 内容列表响应:', response)
+
+    // response是 {code, message, data} 格式，data里面有content和totalElements
+    if (response.code === 200 && response.data) {
+      contentList.value = Array.isArray(response.data.content) ? response.data.content : []
+      total.value = response.data.totalElements || 0
+      console.log('✅ 内容列表加载成功:', {
+        total: total.value,
+        count: contentList.value.length,
+        firstItem: contentList.value[0]
+      })
+    } else {
+      contentList.value = []
+      total.value = 0
+      ElMessage.error(response.message || '加载内容列表失败')
+    }
   } catch (error: any) {
-    console.error('加载内容列表失败:', error)
+    console.error('❌ 加载内容列表失败:', error)
+    contentList.value = []
+    total.value = 0
     ElMessage.error(error.message || '加载内容列表失败')
   } finally {
     loading.value = false
@@ -321,7 +369,7 @@ const loadContents = async () => {
 
 // 监听筛选条件变化
 watch([selectedSite, selectedStatus], () => {
-  currentPage.value = 1
+  currentPage.value = 0  // 重置到第一页（从0开始）
   loadContents()
 })
 
@@ -437,27 +485,14 @@ const handleUnpublish = async (row: Content) => {
 }
 
 // 提交审批
-const handleSubmitApproval = async (row: Content) => {
-  try {
-    await ElMessageBox.confirm(
-      `确定要提交内容 "${row.title}" 进行审批吗？`,
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'info',
-      }
-    )
+const handleSubmitApproval = (row: Content) => {
+  currentContent.value = row
+  submitApprovalDialogVisible.value = true
+}
 
-    await submitApprovalApi(row.id!)
-    ElMessage.success('提交审批成功')
-    await loadContents()
-  } catch (error: any) {
-    if (error !== 'cancel') {
-      console.error('提交审批失败:', error)
-      ElMessage.error(error.message || '提交审批失败')
-    }
-  }
+// 提交审批成功回调
+const handleSubmitApprovalSuccess = async () => {
+  await loadContents()
 }
 
 // 撤回审批
@@ -540,7 +575,7 @@ const handleSizeChange = (val: number) => {
 
 // 当前页改变
 const handleCurrentChange = (val: number) => {
-  currentPage.value = val
+  currentPage.value = val - 1  // Element Plus从1开始，转换为从0开始
   loadContents()
 }
 
@@ -597,6 +632,107 @@ onMounted(() => {
   font-size: 12px;
   color: #999;
   margin-top: 8px;
+}
+
+/* 页面动画优化 */
+.contents {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 卡片头部优化 */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* 表格优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th) {
+  background: #f5f7fa;
+  color: #606266;
+  font-weight: 600;
+}
+
+:deep(.el-table td) {
+  transition: all 0.3s;
+}
+
+:deep(.el-table__row:hover) {
+  background: #f5f7fa;
+}
+
+/* 按钮优化 */
+:deep(.el-button) {
+  transition: all 0.3s;
+}
+
+:deep(.el-button:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+:deep(.el-button:active) {
+  transform: translateY(0);
+}
+
+/* 标签优化 */
+:deep(.el-tag) {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* 对话框优化 */
+:deep(.el-dialog) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+:deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  padding: 20px;
+}
+
+:deep(.el-dialog__title) {
+  color: #fff;
+  font-weight: 600;
+}
+
+:deep(.el-dialog__close) {
+  color: #fff;
+}
+
+:deep(.el-dialog__body) {
+  padding: 24px;
+}
+
+/* 分页优化 */
+:deep(.el-pagination) {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+:deep(.el-pagination button:hover) {
+  color: #409EFF;
 }
 </style>
 

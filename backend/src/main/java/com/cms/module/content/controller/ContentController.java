@@ -4,6 +4,7 @@ import com.cms.common.base.ApiResponse;
 import com.cms.common.base.Page;
 import com.cms.module.content.dto.ContentDTO;
 import com.cms.module.content.dto.ContentQueryDTO;
+import com.cms.module.content.dto.SubmitApprovalOptionsDTO;
 import com.cms.module.content.service.ContentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -108,7 +109,7 @@ public class ContentController {
             @RequestParam(required = false) Long authorId,
             @RequestParam(required = false) Boolean isTop,
             @RequestParam(required = false) Boolean isFeatured,
-            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
@@ -161,7 +162,7 @@ public class ContentController {
     }
 
     /**
-     * 提交审批
+     * 提交审批（简单版本）
      */
     @PostMapping("/{id}/submit-approval")
     @PreAuthorize("hasAuthority('content:create')")
@@ -169,6 +170,20 @@ public class ContentController {
     public ApiResponse<Void> submitApproval(@PathVariable Long id) {
         log.info("提交内容审批请求: id={}", id);
         contentService.submitApproval(id);
+        return ApiResponse.success(null);
+    }
+
+    /**
+     * 提交审批（带选项）
+     */
+    @PostMapping("/{id}/submit-approval-with-options")
+    @PreAuthorize("hasAuthority('content:create')")
+    @Operation(summary = "提交审批（带选项）", description = "提交内容审批，支持选择工作流、审批人和审批模式")
+    public ApiResponse<Void> submitApprovalWithOptions(
+            @PathVariable Long id,
+            @RequestBody @Validated SubmitApprovalOptionsDTO options) {
+        log.info("提交内容审批请求（带选项）: id={}, options={}", id, options);
+        contentService.submitApprovalWithOptions(id, options);
         return ApiResponse.success(null);
     }
 

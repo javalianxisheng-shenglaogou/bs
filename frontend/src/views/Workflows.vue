@@ -74,13 +74,13 @@
 
       <!-- 分页 -->
       <el-pagination
-        v-model:current-page="pagination.page"
+        :current-page="pagination.page + 1"
         v-model:page-size="pagination.size"
         :total="pagination.total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
-        @size-change="loadWorkflows"
-        @current-change="loadWorkflows"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
         style="margin-top: 20px; justify-content: flex-end"
       />
     </el-card>
@@ -158,7 +158,7 @@ const loading = ref(false)
 
 // 分页
 const pagination = reactive({
-  page: 1,
+  page: 0,  // 从0开始，匹配后端分页
   size: 10,
   total: 0
 })
@@ -192,16 +192,32 @@ const rules: FormRules = {
 // 加载工作流列表
 const loadWorkflows = async () => {
   loading.value = true
+  console.log('🔍 开始加载工作流列表，参数:', {
+    page: pagination.page,
+    size: pagination.size,
+    ...searchForm
+  })
+
   try {
-    const data = await getWorkflowsApi({
+    const response = await getWorkflowsApi({
       page: pagination.page,
       size: pagination.size,
       ...searchForm
     })
-    workflowList.value = data.content
-    pagination.total = data.totalElements
+    console.log('✅ 工作流列表响应:', response)
+
+    if (response.code === 200 && response.data) {
+      workflowList.value = Array.isArray(response.data.content) ? response.data.content : []
+      pagination.total = response.data.totalElements || 0
+    } else {
+      workflowList.value = []
+      pagination.total = 0
+      ElMessage.error(response.message || '加载工作流列表失败')
+    }
   } catch (error: any) {
-    console.error('加载工作流列表失败:', error)
+    console.error('❌ 加载工作流列表失败:', error)
+    workflowList.value = []
+    pagination.total = 0
     ElMessage.error(error.message || '加载工作流列表失败')
   } finally {
     loading.value = false
@@ -210,7 +226,7 @@ const loadWorkflows = async () => {
 
 // 搜索
 const handleSearch = () => {
-  pagination.page = 1
+  pagination.page = 0  // 重置到第一页（从0开始）
   loadWorkflows()
 }
 
@@ -218,7 +234,20 @@ const handleSearch = () => {
 const handleReset = () => {
   searchForm.name = ''
   searchForm.status = ''
-  pagination.page = 1
+  pagination.page = 0  // 重置到第一页（从0开始）
+  loadWorkflows()
+}
+
+// 分页改变
+const handlePageChange = (page: number) => {
+  pagination.page = page - 1  // Element Plus从1开始，转换为从0开始
+  loadWorkflows()
+}
+
+// 分页大小改变
+const handleSizeChange = (size: number) => {
+  pagination.size = size
+  pagination.page = 0  // 重置到第一页
   loadWorkflows()
 }
 
@@ -336,16 +365,67 @@ onMounted(() => {
 <style scoped>
 .workflows-container {
   padding: 20px;
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .search-form {
   margin-bottom: 20px;
+}
+
+/* 表格优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table__header) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+:deep(.el-table__header th) {
+  background: transparent;
+  color: white;
+  font-weight: 600;
+}
+
+:deep(.el-table__row) {
+  transition: all 0.3s ease;
+}
+
+:deep(.el-table__row:hover) {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 标签优化 */
+:deep(.el-tag) {
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* 分页优化 */
+:deep(.el-pagination) {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>
 

@@ -1,4 +1,5 @@
-import request from '@/utils/request'
+import { request } from '@/utils/request'
+import type { PageData } from '@/types/api'
 
 /**
  * 系统日志接口
@@ -58,7 +59,7 @@ export interface PageResponse<T> {
  * 获取日志列表(分页)
  */
 export const getLogsApi = (params?: LogQueryParams) => {
-  return request<PageResponse<SystemLog>>({
+  return request<PageData<SystemLog>>({
     url: '/logs',
     method: 'get',
     params

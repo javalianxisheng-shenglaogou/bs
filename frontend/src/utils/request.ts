@@ -2,6 +2,7 @@ import axios from 'axios'
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
+import type { ApiResponse } from '@/types/api'
 
 // 创建axios实例
 const service: AxiosInstance = axios.create({
@@ -58,8 +59,8 @@ service.interceptors.response.use(
       return Promise.reject(new Error(res.message || '请求失败'))
     }
 
-    // 返回data字段
-    return res.data
+    // 返回完整的响应对象（包含code, message, data）
+    return res
   },
   (error) => {
     console.error('响应错误:', error)
@@ -90,6 +91,11 @@ service.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+// 导出类型化的request函数
+export function request<T = any>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  return service(config)
+}
 
 export default service
 

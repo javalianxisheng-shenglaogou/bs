@@ -168,7 +168,7 @@ public class WorkflowService {
                 sortBy
         );
 
-        Pageable pageable = PageRequest.of(page - 1, size, sort);
+        Pageable pageable = PageRequest.of(page, size, sort);
         Page<Workflow> workflowPage = workflowRepository.findAll(pageable);
 
         return workflowPage.map(this::convertToDTO);

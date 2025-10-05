@@ -3,6 +3,7 @@ package com.cms.module.auth.controller;
 import com.cms.common.base.ApiResponse;
 import com.cms.module.auth.dto.LoginRequest;
 import com.cms.module.auth.dto.LoginResponse;
+import com.cms.module.auth.dto.RegisterRequest;
 import com.cms.module.auth.dto.UserInfoVO;
 import com.cms.module.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,6 +30,16 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<LoginResponse> login(@Validated @RequestBody LoginRequest request) {
         LoginResponse response = authService.login(request);
+        return ApiResponse.success(response);
+    }
+
+    /**
+     * 用户注册
+     */
+    @Operation(summary = "用户注册", description = "新用户注册，注册成功后自动登录")
+    @PostMapping("/register")
+    public ApiResponse<LoginResponse> register(@Validated @RequestBody RegisterRequest request) {
+        LoginResponse response = authService.register(request);
         return ApiResponse.success(response);
     }
 

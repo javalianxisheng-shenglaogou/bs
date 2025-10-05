@@ -1,4 +1,5 @@
-import request from '@/utils/request'
+import { request } from '@/utils/request'
+import type { PageData } from '@/types/api'
 
 /**
  * 分类接口
