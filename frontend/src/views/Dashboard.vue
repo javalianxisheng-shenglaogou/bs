@@ -55,6 +55,7 @@
             </div>
           </template>
           <div class="quick-actions">
+            <!-- 所有用户都可以创建内容 -->
             <div class="action-item" @click="createContent">
               <div class="action-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
                 <el-icon :size="24"><DocumentAdd /></el-icon>
@@ -64,7 +65,9 @@
                 <div class="action-desc">发布新的文章或页面</div>
               </div>
             </div>
-            <div class="action-item" @click="createSite">
+
+            <!-- 只有管理员可以创建站点 -->
+            <div v-if="userStore.isAdmin()" class="action-item" @click="createSite">
               <div class="action-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">
                 <el-icon :size="24"><Plus /></el-icon>
               </div>
@@ -73,7 +76,9 @@
                 <div class="action-desc">添加新的站点配置</div>
               </div>
             </div>
-            <div class="action-item" @click="viewLogs">
+
+            <!-- 只有管理员可以查看日志 -->
+            <div v-if="userStore.isAdmin()" class="action-item" @click="viewLogs">
               <div class="action-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">
                 <el-icon :size="24"><Document /></el-icon>
               </div>
@@ -82,7 +87,9 @@
                 <div class="action-desc">系统操作记录</div>
               </div>
             </div>
-            <div class="action-item" @click="manageUsers">
+
+            <!-- 只有管理员可以管理用户 -->
+            <div v-if="userStore.isAdmin()" class="action-item" @click="manageUsers">
               <div class="action-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)">
                 <el-icon :size="24"><User /></el-icon>
               </div>
@@ -141,11 +148,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, markRaw } from 'vue'
+import { ref, onMounted, markRaw, computed } from 'vue'
 import {
   User, OfficeBuilding, Document, View,
   Sunny, Sunset, Moon, CaretTop, CaretBottom,
-  Operation, DocumentAdd, Plus, Clock, InfoFilled, List
+  Operation, DocumentAdd, Plus, Clock, InfoFilled, List,
+  Edit, Check
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { healthCheck } from '@/api/test'
@@ -155,37 +163,74 @@ import { useUserStore } from '@/store/user'
 const router = useRouter()
 const userStore = useUserStore()
 
-// 统计数据
-const stats = ref([
-  {
-    title: '用户总数',
-    value: 26,
-    icon: markRaw(User),
-    color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    trend: 12
-  },
-  {
-    title: '站点数量',
-    value: 8,
-    icon: markRaw(OfficeBuilding),
-    color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    trend: 5
-  },
-  {
-    title: '内容总数',
-    value: 243,
-    icon: markRaw(Document),
-    color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    trend: 18
-  },
-  {
-    title: '今日访问',
-    value: 1234,
-    icon: markRaw(View),
-    color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    trend: -3
+// 统计数据 - 根据用户角色显示不同内容
+const stats = computed(() => {
+  if (userStore.isAdmin()) {
+    // 管理员看到全局统计
+    return [
+      {
+        title: '用户总数',
+        value: 26,
+        icon: markRaw(User),
+        color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        trend: 12
+      },
+      {
+        title: '站点数量',
+        value: 8,
+        icon: markRaw(OfficeBuilding),
+        color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        trend: 5
+      },
+      {
+        title: '内容总数',
+        value: 243,
+        icon: markRaw(Document),
+        color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        trend: 18
+      },
+      {
+        title: '今日访问',
+        value: 1234,
+        icon: markRaw(View),
+        color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+        trend: -3
+      }
+    ]
+  } else {
+    // 编辑看到个人统计
+    return [
+      {
+        title: '我的内容',
+        value: 15,
+        icon: markRaw(Document),
+        color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        trend: 8
+      },
+      {
+        title: '草稿数量',
+        value: 3,
+        icon: markRaw(Edit),
+        color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        trend: 2
+      },
+      {
+        title: '待审批',
+        value: 2,
+        icon: markRaw(Clock),
+        color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        trend: 0
+      },
+      {
+        title: '已发布',
+        value: 10,
+        icon: markRaw(Check),
+        color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+        trend: 5
+      }
+    ]
   }
-])
+})
 
 // 最近活动
 const recentActivities = ref([

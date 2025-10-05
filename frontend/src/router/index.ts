@@ -113,7 +113,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '我的任务',
           icon: 'Checked',
-          showInMenu: true
+          showInMenu: true,
+          permissions: ['workflow:view']
         }
       },
       {

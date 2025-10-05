@@ -27,10 +27,10 @@ public class UserController {
     private final UserService userService;
     
     /**
-     * 获取所有用户（不分页）
+     * 获取所有用户（不分页，用于下拉选择，所有登录用户可访问）
      */
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('user:view')")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "获取所有用户", description = "获取所有用户列表（不分页）")
     public ApiResponse<java.util.List<UserDTO>> getAllUsers() {
         log.info("获取所有用户列表");
@@ -82,10 +82,10 @@ public class UserController {
     }
     
     /**
-     * 更新用户
+     * 更新用户（用户可以更新自己的信息，管理员可以更新任何用户）
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('user:update')")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "更新用户", description = "更新用户信息")
     public ApiResponse<UserDTO> updateUser(
             @PathVariable Long id,

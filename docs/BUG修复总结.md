@@ -1,6 +1,84 @@
 # Bug修复总结
 
-## 🎉 最新修复（2025-10-05 11:00）
+## 🎉 最新修复（2025-10-05 11:45）
+
+### 问题11：内容管理审批状态显示问题 ✅ 已修复
+
+**问题描述**：
+1. 未提交审批的内容显示"无需审批"（应该显示"未提交"）
+2. 审批通过后，前端显示"无需审批"而不是"已通过"
+
+**问题原因**：
+1. **根本原因**：后端 `ContentDTO` 缺少 `approvalStatus` 字段
+   - 后端返回的数据中没有包含审批状态信息
+   - 前端无法获取审批状态，导致显示错误
+
+2. **前端显示逻辑问题**：
+   - 草稿状态且 `approvalStatus` 为 `NONE` 时，显示"无需审批"
+   - 应该显示"未提交"更合适
+
+**修复方案**：
+1. ✅ 修复后端DTO：在 `ContentDTO` 中添加审批相关字段
+2. ✅ 优化前端显示逻辑：区分"未提交"和"无需审批"
+
+**修复代码**：
+
+**后端修复** - `backend/src/main/java/com/cms/module/content/dto/ContentDTO.java`：
+```java
+private String status = "DRAFT";
+
+// 新增审批相关字段
+private String approvalStatus = "NONE";
+private Long workflowInstanceId;
+private LocalDateTime submittedAt;
+private LocalDateTime approvedAt;
+private Long approvedBy;
+
+private LocalDateTime publishedAt;
+```
+
+**前端修复** - `frontend/src/views/Contents.vue`：
+```vue
+<el-table-column label="审批状态" width="100">
+  <template #default="{ row }">
+    <el-tag v-if="row.approvalStatus === 'APPROVED'" type="success">已通过</el-tag>
+    <el-tag v-else-if="row.approvalStatus === 'PENDING'" type="warning">审批中</el-tag>
+    <el-tag v-else-if="row.approvalStatus === 'REJECTED'" type="danger">已拒绝</el-tag>
+    <el-tag v-else-if="row.status === 'DRAFT'" type="info">未提交</el-tag>
+    <el-tag v-else type="info">无需审批</el-tag>
+  </template>
+</el-table-column>
+```
+
+**修复文件**：
+- `backend/src/main/java/com/cms/module/content/dto/ContentDTO.java`
+- `frontend/src/views/Contents.vue`
+- `docs/BUG修复总结.md`
+
+**验证结果**：
+```
+✅ 后端API测试通过：
+ID: 244 | Status: PUBLISHED | Approval: NONE
+ID: 243 | Status: DRAFT | Approval: NONE
+ID: 240 | Status: DRAFT | Approval: APPROVED
+```
+
+**前端显示效果**：
+- 草稿 + NONE → 显示"未提交"
+- 草稿 + PENDING → 显示"审批中"
+- 草稿 + APPROVED → 显示"已通过"
+- 已发布 + NONE → 显示"无需审批"
+
+**测试步骤**：
+1. 刷新内容管理页面：`http://localhost:3000/contents`
+2. 查看草稿内容的审批状态 → 应该显示"未提交"
+3. 提交审批 → 应该显示"审批中"
+4. 审批通过 → 应该显示"已通过"
+5. 刷新页面 → 状态应该保持不变
+
+---
+
+## 历史修复（2025-10-05 11:00）
 
 ### 问题9：日志删除功能报500错误 ✅ 已修复
 

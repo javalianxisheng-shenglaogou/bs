@@ -44,6 +44,16 @@ public class ContentDTO {
 
     private String status = "DRAFT";
 
+    private String approvalStatus = "NONE";
+
+    private Long workflowInstanceId;
+
+    private LocalDateTime submittedAt;
+
+    private LocalDateTime approvedAt;
+
+    private Long approvedBy;
+
     private LocalDateTime publishedAt;
 
     private Integer viewCount = 0;

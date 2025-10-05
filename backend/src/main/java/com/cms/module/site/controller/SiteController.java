@@ -140,10 +140,10 @@ public class SiteController {
     }
 
     /**
-     * 获取所有站点列表
+     * 获取所有站点列表（用于下拉选择，所有登录用户可访问）
      */
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('site:list')")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "获取所有站点", description = "获取所有站点列表（不分页）")
     public ApiResponse<List<SiteDTO>> getAllSites() {
         log.info("获取所有站点列表请求");

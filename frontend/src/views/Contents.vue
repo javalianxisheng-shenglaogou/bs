@@ -52,6 +52,8 @@
             <el-tag v-if="row.approvalStatus === 'APPROVED'" type="success">已通过</el-tag>
             <el-tag v-else-if="row.approvalStatus === 'PENDING'" type="warning">审批中</el-tag>
             <el-tag v-else-if="row.approvalStatus === 'REJECTED'" type="danger">已拒绝</el-tag>
+            <el-tag v-else-if="row.status === 'DRAFT' && (!row.approvalStatus || row.approvalStatus === 'NONE')" type="info">未提交</el-tag>
+            <el-tag v-else-if="row.status === 'PUBLISHED' && row.approvalStatus === 'APPROVED'" type="success">已通过</el-tag>
             <el-tag v-else type="info">无需审批</el-tag>
           </template>
         </el-table-column>
@@ -68,9 +70,19 @@
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
 
-            <!-- 提交审批按钮 - 草稿状态且未提交审批 -->
+            <!-- 管理员：直接发布按钮 - 草稿状态 -->
             <el-button
-              v-if="row.status === 'DRAFT' && (!row.approvalStatus || row.approvalStatus === 'NONE')"
+              v-if="userStore.isAdmin() && row.status === 'DRAFT'"
+              type="success"
+              size="small"
+              @click="handlePublish(row)"
+            >
+              发布
+            </el-button>
+
+            <!-- 非管理员：提交审批按钮 - 草稿状态且未提交审批 -->
+            <el-button
+              v-if="!userStore.isAdmin() && row.status === 'DRAFT' && (!row.approvalStatus || row.approvalStatus === 'NONE')"
               type="success"
               size="small"
               @click="handleSubmitApproval(row)"
@@ -78,9 +90,9 @@
               提交审批
             </el-button>
 
-            <!-- 撤回审批按钮 - 审批中 -->
+            <!-- 非管理员：撤回审批按钮 - 审批中 -->
             <el-button
-              v-if="row.approvalStatus === 'PENDING'"
+              v-if="!userStore.isAdmin() && row.approvalStatus === 'PENDING'"
               type="warning"
               size="small"
               @click="handleWithdrawApproval(row)"
@@ -88,9 +100,9 @@
               撤回审批
             </el-button>
 
-            <!-- 直接发布按钮 - 管理员或审批通过 -->
+            <!-- 非管理员：发布按钮 - 草稿状态且审批通过 -->
             <el-button
-              v-if="row.status !== 'PUBLISHED' && row.approvalStatus !== 'PENDING'"
+              v-if="!userStore.isAdmin() && row.status === 'DRAFT' && row.approvalStatus === 'APPROVED'"
               type="success"
               size="small"
               @click="handlePublish(row)"

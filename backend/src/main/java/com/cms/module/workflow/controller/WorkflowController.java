@@ -89,10 +89,10 @@ public class WorkflowController {
     }
 
     /**
-     * 获取所有工作流
+     * 获取所有工作流（用于下拉选择，所有登录用户可访问）
      */
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('workflow:list')")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "获取所有工作流", description = "获取所有工作流列表（不分页）")
     public ApiResponse<List<WorkflowDTO>> getAllWorkflows() {
         log.info("获取所有工作流列表请求");
