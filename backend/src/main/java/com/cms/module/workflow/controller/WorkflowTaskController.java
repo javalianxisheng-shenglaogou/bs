@@ -33,9 +33,9 @@ public class WorkflowTaskController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "获取我的待办任务", description = "获取当前用户的待办任务列表")
     public ApiResponse<Page<WorkflowTaskDTO>> getMyPendingTasks(
-            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size) {
-        
+
         log.info("获取我的待办任务请求: page={}, size={}", page, size);
         Page<WorkflowTaskDTO> result = taskService.getMyPendingTasks(page, size);
         return ApiResponse.success(result);
@@ -48,9 +48,9 @@ public class WorkflowTaskController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "获取我的已办任务", description = "获取当前用户的已办任务列表")
     public ApiResponse<Page<WorkflowTaskDTO>> getMyCompletedTasks(
-            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size) {
-        
+
         log.info("获取我的已办任务请求: page={}, size={}", page, size);
         Page<WorkflowTaskDTO> result = taskService.getMyCompletedTasks(page, size);
         return ApiResponse.success(result);
