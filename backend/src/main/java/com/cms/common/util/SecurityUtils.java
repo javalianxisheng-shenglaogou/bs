@@ -1,6 +1,6 @@
 package com.cms.common.util;
 
-import com.cms.security.UserDetailsImpl;
+import com.cms.security.service.CustomUserDetails;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,33 +12,33 @@ import java.util.Collection;
  * 用于获取当前登录用户信息和权限检查
  */
 public class SecurityUtils {
-    
+
     /**
      * 获取当前认证信息
      */
     public static Authentication getAuthentication() {
         return SecurityContextHolder.getContext().getAuthentication();
     }
-    
+
     /**
      * 获取当前登录用户ID
      */
     public static Long getCurrentUserId() {
         Authentication authentication = getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            return userDetails.getId();
+        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            return userDetails.getUserId();
         }
         return null;
     }
-    
+
     /**
      * 获取当前登录用户名
      */
     public static String getCurrentUsername() {
         Authentication authentication = getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             return userDetails.getUsername();
         }
         return null;
@@ -82,8 +82,8 @@ public class SecurityUtils {
      */
     public static boolean isSuperAdmin() {
         Authentication authentication = getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        if (authentication != null && authentication.getPrincipal() instanceof CustomUserDetails) {
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             return userDetails.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_SUPER_ADMIN"));
         }

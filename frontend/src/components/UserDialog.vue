@@ -86,16 +86,15 @@
           multiple
           placeholder="请选择角色"
           style="width: 100%"
-          :disabled="isEdit"
+          :disabled="isEdit && !canEditRole"
         >
           <el-option label="超级管理员" :value="1" />
           <el-option label="站点管理员" :value="2" />
           <el-option label="编辑者" :value="3" />
-          <el-option label="审核者" :value="4" />
-          <el-option label="查看者" :value="5" />
+          <el-option label="审批者" :value="4" />
         </el-select>
-        <div v-if="isEdit" style="color: #909399; font-size: 12px; margin-top: 5px;">
-          注意：编辑用户时不能修改角色
+        <div v-if="isEdit && !canEditRole" style="color: #909399; font-size: 12px; margin-top: 5px;">
+          注意：只有管理员可以修改用户角色
         </div>
       </el-form-item>
     </el-form>
@@ -110,9 +109,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { createUser, updateUser, type UserCreateRequest, type UserUpdateRequest } from '@/api/user'
+import { useUserStore } from '@/store/user'
 
 // Props
 const props = defineProps<{
@@ -132,6 +132,12 @@ const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
 const isEdit = ref(false)
+const userStore = useUserStore()
+
+// 计算属性：是否可以编辑角色（只有管理员可以）
+const canEditRole = computed(() => {
+  return userStore.hasPermission('user:update') || userStore.isAdmin()
+})
 
 // 表单数据
 const formData = reactive<UserCreateRequest & { id?: number }>({
@@ -225,9 +231,14 @@ const handleSubmit = async () => {
         gender: formData.gender,
         birthday: formData.birthday,
         bio: formData.bio,
-        status: formData.status,
-        roleIds: formData.roleIds
+        status: formData.status
       }
+
+      // 只有管理员可以修改角色
+      if (canEditRole.value && formData.roleIds && formData.roleIds.length > 0) {
+        updateData.roleIds = formData.roleIds
+      }
+
       const response = await updateUser(props.userId, updateData)
       if (response.code === 200) {
         ElMessage.success('更新成功')

@@ -228,12 +228,16 @@ public class UserService {
             user.setStatus(request.getStatus());
         }
         
-        // 更新角色（只有管理员可以修改角色）
+        // 更新角色（只有管理员可以修改角色，且必须明确提供角色ID列表）
+        // 注意：如果request.getRoleIds()为null，表示不修改角色；如果为空列表，也不修改角色
         if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
+            // 检查是否有权限修改角色
             if (!isAdmin) {
                 log.warn("用户 {} 尝试修改角色，但没有权限", currentUserId);
                 throw new AccessDeniedException("您没有权限修改用户角色");
             }
+
+            // 更新角色
             Set<Role> roles = new HashSet<>();
             for (Long roleId : request.getRoleIds()) {
                 Role role = roleRepository.findById(roleId)
@@ -241,6 +245,7 @@ public class UserService {
                 roles.add(role);
             }
             user.setRoles(roles);
+            log.info("管理员 {} 修改了用户 {} 的角色", currentUserId, id);
         }
         
         // 保存用户
