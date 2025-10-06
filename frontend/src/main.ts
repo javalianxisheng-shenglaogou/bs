@@ -6,6 +6,7 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import { setupPermissionDirective } from '@/directives/permission'
+import i18n from '@/locales'
 import '@/styles/animations.css'
 
 const app = createApp(App)
@@ -20,5 +21,6 @@ setupPermissionDirective(app)
 
 app.use(router)
 app.use(pinia)
+app.use(i18n)
 app.use(ElementPlus)
 app.mount('#app')

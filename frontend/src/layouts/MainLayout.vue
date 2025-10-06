@@ -40,6 +40,9 @@
             </el-breadcrumb>
           </div>
           <div class="header-right">
+            <!-- 语言切换器 -->
+            <LanguageSwitcher />
+
             <!-- 用户信息 -->
             <el-dropdown @command="handleCommand" class="user-dropdown">
               <span class="el-dropdown-link">
@@ -91,6 +94,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { ArrowDown, OfficeBuilding, User, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
 const route = useRoute()
 const router = useRouter()
