@@ -39,20 +39,21 @@ public class UserController {
     }
 
     /**
-     * 获取用户列表
+     * 获取用户列表（默认按创建时间倒序排列）
      */
     @GetMapping
     @PreAuthorize("hasAuthority('user:view')")
-    @Operation(summary = "获取用户列表", description = "分页查询用户列表，支持关键词搜索和状态筛选")
+    @Operation(summary = "获取用户列表", description = "分页查询用户列表，支持关键词搜索和状态筛选，默认按创建时间倒序排列")
     public ApiResponse<Page<UserDTO>> getUserList(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "DESC") String sortOrder
     ) {
-        log.info("获取用户列表: keyword={}, status={}, page={}, size={}", keyword, status, page, size);
+        log.info("获取用户列表: keyword={}, status={}, page={}, size={}, sortBy={}, sortOrder={}",
+                 keyword, status, page, size, sortBy, sortOrder);
         Page<UserDTO> result = userService.getUserList(keyword, status, page, size, sortBy, sortOrder);
         return ApiResponse.success(result);
     }

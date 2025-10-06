@@ -201,8 +201,16 @@ const loadUsers = async () => {
   try {
     const response = await getAllUsersApi()
     if (response.code === 200 && response.data) {
-      // 过滤掉当前用户自己
-      userList.value = response.data
+      // 只显示审批者和超级管理员
+      userList.value = response.data.filter((user: User) => {
+        return user.roles && user.roles.some((role: string) =>
+          role === 'SUPER_ADMIN' || role === 'ADMIN' || role === 'REVIEWER'
+        )
+      })
+
+      if (userList.value.length === 0) {
+        ElMessage.warning('系统中暂无可用的审批人员')
+      }
     }
   } catch (error) {
     console.error('加载用户列表失败:', error)

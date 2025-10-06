@@ -1,0 +1,492 @@
+================================================================================
+                    多站点CMS系统 - 内容版本控制系统设计方案
+================================================================================
+
+文档信息
+--------------------------------------------------------------------------------
+文件名：内容版本控制系统设计方案.txt
+创建日期：2025-10-06
+版本：V1.0
+状态：方案设计阶段
+
+
+================================================================================
+                            一、需求分析
+================================================================================
+
+1.1 业务需求
+--------------------------------------------------------------------------------
+（1）版本存档
+    - 每次修改内容时，自动保存当前版本
+    - 保留完整的内容快照（标题、内容、摘要、封面图等）
+    - 记录修改人、修改时间、修改原因
+
+（2）版本查看
+    - 可以查看内容的所有历史版本
+    - 可以对比不同版本之间的差异
+    - 可以查看版本的详细信息（修改人、时间、原因）
+
+（3）版本回溯
+    - 可以将内容恢复到任意历史版本
+    - 回溯操作本身也会创建新版本
+    - 支持预览历史版本的内容
+
+（4）版本管理
+    - 可以删除不需要的历史版本
+    - 可以为重要版本添加标签（如"上线版本"、"备份版本"）
+    - 可以设置版本保留策略（如保留最近30个版本）
+
+
+1.2 技术需求
+--------------------------------------------------------------------------------
+（1）性能要求
+    - 版本创建不应影响内容更新的性能
+    - 版本查询应该快速响应
+    - 大量版本不应影响主表查询性能
+
+（2）存储要求
+    - 合理控制存储空间
+    - 支持版本数据的归档和清理
+    - 考虑富文本内容和图片的存储
+
+（3）安全要求
+    - 版本数据不能被随意删除
+    - 只有授权用户才能回溯版本
+    - 记录所有版本操作的审计日志
+
+
+================================================================================
+                            二、技术方案设计
+================================================================================
+
+2.1 数据库设计
+--------------------------------------------------------------------------------
+（1）版本表设计（content_versions）
+
+    字段说明：
+    - id：版本ID（主键）
+    - content_id：关联的内容ID（外键）
+    - version_number：版本号（从1开始递增）
+    - title：标题快照
+    - slug：URL别名快照
+    - summary：摘要快照
+    - content：内容快照（富文本）
+    - cover_image：封面图快照
+    - content_type：内容类型快照
+    - status：状态快照
+    - is_top：是否置顶快照
+    - is_featured：是否推荐快照
+    - is_original：是否原创快照
+    - tags：标签快照（JSON）
+    - metadata：元数据快照（JSON）
+    - change_summary：修改摘要（用户填写）
+    - change_type：修改类型（CREATE/UPDATE/PUBLISH/UNPUBLISH）
+    - created_by：创建人ID
+    - created_by_name：创建人姓名
+    - created_at：创建时间
+    - is_tagged：是否标记为重要版本
+    - tag_name：版本标签名称
+    - file_size：版本数据大小（字节）
+
+    索引设计：
+    - PRIMARY KEY (id)
+    - INDEX idx_content_id (content_id)
+    - INDEX idx_version_number (content_id, version_number)
+    - INDEX idx_created_at (created_at)
+    - INDEX idx_created_by (created_by)
+
+    SQL示例：
+    CREATE TABLE content_versions (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        content_id BIGINT NOT NULL,
+        version_number INT NOT NULL,
+        title VARCHAR(500) NOT NULL,
+        slug VARCHAR(200),
+        summary TEXT,
+        content LONGTEXT,
+        cover_image VARCHAR(500),
+        content_type VARCHAR(50),
+        status VARCHAR(50),
+        is_top BOOLEAN DEFAULT FALSE,
+        is_featured BOOLEAN DEFAULT FALSE,
+        is_original BOOLEAN DEFAULT FALSE,
+        tags JSON,
+        metadata JSON,
+        change_summary VARCHAR(500),
+        change_type VARCHAR(50) NOT NULL,
+        created_by BIGINT NOT NULL,
+        created_by_name VARCHAR(100),
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        is_tagged BOOLEAN DEFAULT FALSE,
+        tag_name VARCHAR(100),
+        file_size BIGINT,
+        INDEX idx_content_id (content_id),
+        INDEX idx_version_number (content_id, version_number),
+        INDEX idx_created_at (created_at),
+        FOREIGN KEY (content_id) REFERENCES contents(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+（2）版本操作日志表（content_version_logs）
+
+    字段说明：
+    - id：日志ID
+    - content_id：内容ID
+    - version_id：版本ID
+    - operation_type：操作类型（CREATE/VIEW/RESTORE/DELETE/TAG）
+    - operator_id：操作人ID
+    - operator_name：操作人姓名
+    - operation_detail：操作详情（JSON）
+    - ip_address：IP地址
+    - user_agent：用户代理
+    - created_at：操作时间
+
+    SQL示例：
+    CREATE TABLE content_version_logs (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        content_id BIGINT NOT NULL,
+        version_id BIGINT,
+        operation_type VARCHAR(50) NOT NULL,
+        operator_id BIGINT NOT NULL,
+        operator_name VARCHAR(100),
+        operation_detail JSON,
+        ip_address VARCHAR(50),
+        user_agent VARCHAR(500),
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_content_id (content_id),
+        INDEX idx_version_id (version_id),
+        INDEX idx_operator_id (operator_id),
+        INDEX idx_created_at (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+2.2 后端实现方案
+--------------------------------------------------------------------------------
+（1）实体类设计
+
+    ContentVersion.java：
+    @Entity
+    @Table(name = "content_versions")
+    public class ContentVersion {
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
+        
+        @Column(name = "content_id", nullable = false)
+        private Long contentId;
+        
+        @Column(name = "version_number", nullable = false)
+        private Integer versionNumber;
+        
+        @Column(name = "title", nullable = false, length = 500)
+        private String title;
+        
+        @Column(name = "content", columnDefinition = "LONGTEXT")
+        private String content;
+        
+        @Column(name = "change_summary", length = 500)
+        private String changeSummary;
+        
+        @Column(name = "change_type", nullable = false, length = 50)
+        private String changeType;
+        
+        @Column(name = "created_by", nullable = false)
+        private Long createdBy;
+        
+        @Column(name = "created_by_name", length = 100)
+        private String createdByName;
+        
+        @Column(name = "created_at", nullable = false)
+        private LocalDateTime createdAt;
+        
+        // 其他字段...
+    }
+
+
+（2）Repository接口设计
+
+    ContentVersionRepository.java：
+    public interface ContentVersionRepository extends JpaRepository<ContentVersion, Long> {
+        // 查询内容的所有版本
+        List<ContentVersion> findByContentIdOrderByVersionNumberDesc(Long contentId);
+        
+        // 查询内容的最新版本号
+        @Query("SELECT MAX(v.versionNumber) FROM ContentVersion v WHERE v.contentId = ?1")
+        Integer findMaxVersionNumberByContentId(Long contentId);
+        
+        // 查询指定版本
+        Optional<ContentVersion> findByContentIdAndVersionNumber(Long contentId, Integer versionNumber);
+        
+        // 统计内容的版本数量
+        Long countByContentId(Long contentId);
+        
+        // 删除内容的所有版本
+        void deleteByContentId(Long contentId);
+    }
+
+
+（3）Service层设计
+
+    ContentVersionService.java：
+    
+    主要方法：
+    a. 创建版本
+       public ContentVersion createVersion(Long contentId, String changeSummary, String changeType)
+       - 获取当前内容的完整数据
+       - 生成新版本号（最大版本号+1）
+       - 保存版本快照
+       - 记录操作日志
+    
+    b. 查询版本列表
+       public List<ContentVersionDTO> getVersionList(Long contentId)
+       - 查询内容的所有版本
+       - 按版本号倒序排列
+       - 转换为DTO返回
+    
+    c. 查询版本详情
+       public ContentVersionDTO getVersionDetail(Long versionId)
+       - 查询指定版本的详细信息
+       - 记录查看日志
+    
+    d. 对比版本差异
+       public VersionDiffDTO compareVersions(Long versionId1, Long versionId2)
+       - 查询两个版本的数据
+       - 对比字段差异
+       - 返回差异信息
+    
+    e. 恢复版本
+       public ContentDTO restoreVersion(Long contentId, Long versionId, String restoreReason)
+       - 查询历史版本数据
+       - 更新当前内容为历史版本的数据
+       - 创建新版本（记录为RESTORE类型）
+       - 记录操作日志
+    
+    f. 删除版本
+       public void deleteVersion(Long versionId)
+       - 检查权限（只有管理员可以删除）
+       - 删除版本数据
+       - 记录操作日志
+    
+    g. 标记重要版本
+       public void tagVersion(Long versionId, String tagName)
+       - 更新版本的标记状态
+       - 记录操作日志
+
+
+（4）Controller层设计
+
+    ContentVersionController.java：
+    
+    API接口：
+    - GET /contents/{contentId}/versions - 获取版本列表
+    - GET /contents/{contentId}/versions/{versionNumber} - 获取版本详情
+    - GET /contents/{contentId}/versions/compare?v1={v1}&v2={v2} - 对比版本
+    - POST /contents/{contentId}/versions/{versionId}/restore - 恢复版本
+    - DELETE /contents/{contentId}/versions/{versionId} - 删除版本
+    - PUT /contents/{contentId}/versions/{versionId}/tag - 标记版本
+
+
+2.3 前端实现方案
+--------------------------------------------------------------------------------
+（1）版本列表组件（ContentVersionList.vue）
+
+    功能：
+    - 显示内容的所有历史版本
+    - 显示版本号、修改人、修改时间、修改摘要
+    - 支持查看版本详情
+    - 支持对比版本差异
+    - 支持恢复版本
+    - 支持标记重要版本
+
+    界面布局：
+    - 时间轴样式展示版本历史
+    - 每个版本显示：版本号、修改人、时间、摘要、操作按钮
+    - 操作按钮：查看详情、对比、恢复、标记
+
+
+（2）版本详情对话框（ContentVersionDetail.vue）
+
+    功能：
+    - 显示版本的完整内容
+    - 显示版本的元数据（标题、摘要、封面图等）
+    - 支持预览富文本内容
+    - 支持恢复到此版本
+
+
+（3）版本对比对话框（ContentVersionCompare.vue）
+
+    功能：
+    - 并排显示两个版本的内容
+    - 高亮显示差异部分
+    - 支持字段级别的对比（标题、内容、摘要等）
+    - 支持选择恢复到某个版本
+
+
+（4）版本恢复确认对话框
+
+    功能：
+    - 显示即将恢复的版本信息
+    - 要求用户填写恢复原因
+    - 警告：恢复操作会创建新版本
+
+
+2.4 版本创建触发时机
+--------------------------------------------------------------------------------
+（1）自动创建版本的场景
+    - 内容首次创建时（CREATE类型）
+    - 内容更新时（UPDATE类型）
+    - 内容发布时（PUBLISH类型）
+    - 内容下线时（UNPUBLISH类型）
+
+（2）版本创建流程
+    1. 用户提交内容更新请求
+    2. 后端验证数据
+    3. 创建版本快照（异步）
+    4. 更新内容主表
+    5. 返回成功响应
+
+（3）异步处理
+    - 使用Spring的@Async注解异步创建版本
+    - 避免版本创建影响主流程性能
+    - 失败时记录日志，不影响主流程
+
+
+================================================================================
+                            三、技术难点与解决方案
+================================================================================
+
+3.1 性能优化
+--------------------------------------------------------------------------------
+（1）问题：大量版本数据影响查询性能
+    解决方案：
+    - 版本表与内容表分离，避免影响主表查询
+    - 为版本表创建合适的索引
+    - 版本列表查询只返回必要字段
+    - 支持分页查询版本列表
+
+（2）问题：版本创建影响内容更新性能
+    解决方案：
+    - 使用异步方式创建版本
+    - 版本创建失败不影响主流程
+    - 使用消息队列处理版本创建（可选）
+
+（3）问题：富文本内容占用大量存储空间
+    解决方案：
+    - 对富文本内容进行压缩存储
+    - 定期清理过期版本
+    - 实施版本保留策略（如只保留最近30个版本）
+
+
+3.2 数据一致性
+--------------------------------------------------------------------------------
+（1）问题：版本创建失败导致数据不一致
+    解决方案：
+    - 版本创建使用独立事务
+    - 失败时记录日志，后续补偿
+    - 提供手动创建版本的接口
+
+（2）问题：并发更新导致版本号冲突
+    解决方案：
+    - 使用数据库的唯一索引保证版本号唯一
+    - 版本号生成使用SELECT MAX + 1的方式
+    - 使用乐观锁或悲观锁控制并发
+
+
+3.3 存储优化
+--------------------------------------------------------------------------------
+（1）问题：图片和附件占用大量空间
+    解决方案：
+    - 版本表只存储图片URL，不复制图片文件
+    - 图片文件使用引用计数，只有所有版本都删除才删除文件
+    - 考虑使用对象存储服务（如OSS）
+
+（2）问题：历史版本数据过多
+    解决方案：
+    - 实施版本保留策略
+    - 提供版本归档功能
+    - 提供批量删除历史版本的功能
+
+
+================================================================================
+                            四、实施计划
+================================================================================
+
+4.1 第一阶段：基础功能（1-2周）
+--------------------------------------------------------------------------------
+- 创建数据库表结构
+- 实现版本自动创建功能
+- 实现版本列表查询功能
+- 实现版本详情查询功能
+- 前端版本列表组件
+- 前端版本详情对话框
+
+
+4.2 第二阶段：高级功能（1-2周）
+--------------------------------------------------------------------------------
+- 实现版本对比功能
+- 实现版本恢复功能
+- 实现版本标记功能
+- 前端版本对比组件
+- 前端版本恢复功能
+- 操作日志记录
+
+
+4.3 第三阶段：优化与完善（1周）
+--------------------------------------------------------------------------------
+- 性能优化
+- 版本保留策略
+- 版本清理功能
+- 权限控制完善
+- 测试与文档
+
+
+================================================================================
+                            五、风险评估
+================================================================================
+
+5.1 技术风险
+--------------------------------------------------------------------------------
+- 风险：版本数据量过大影响性能
+  应对：实施版本保留策略，定期清理
+
+- 风险：异步创建版本失败
+  应对：记录日志，提供补偿机制
+
+- 风险：版本恢复导致数据丢失
+  应对：恢复前创建新版本，可以再次恢复
+
+
+5.2 业务风险
+--------------------------------------------------------------------------------
+- 风险：用户频繁恢复版本导致混乱
+  应对：限制恢复权限，记录操作日志
+
+- 风险：版本对比功能复杂度高
+  应对：先实现基础对比，逐步完善
+
+
+================================================================================
+                            六、总结
+================================================================================
+
+本方案设计了一套完整的内容版本控制系统，包括：
+- 完整的数据库设计
+- 清晰的后端架构
+- 友好的前端界面
+- 合理的性能优化
+- 完善的风险控制
+
+实施后可以实现：
+- 自动保存内容的每次修改
+- 查看完整的修改历史
+- 对比不同版本的差异
+- 恢复到任意历史版本
+- 管理和清理历史版本
+
+建议分阶段实施，先实现基础功能，再逐步完善高级功能。
+
+
+================================================================================
+                            文档结束
+================================================================================
+

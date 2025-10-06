@@ -66,9 +66,18 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" width="180" />
-        <el-table-column label="操作" width="400" fixed="right">
+        <el-table-column label="操作" width="450" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
+            <!-- 编辑按钮 - 只有非发布状态才能编辑 -->
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleEdit(row)"
+              :disabled="row.status === 'PUBLISHED'"
+              :title="row.status === 'PUBLISHED' ? '已发布的内容需要先下线才能编辑' : '编辑内容'"
+            >
+              编辑
+            </el-button>
 
             <!-- 管理员：直接发布按钮 - 草稿状态 -->
             <el-button
@@ -110,7 +119,7 @@
               发布
             </el-button>
 
-            <!-- 下线按钮 -->
+            <!-- 下线按钮 - 已发布状态 -->
             <el-button
               v-if="row.status === 'PUBLISHED'"
               type="warning"
@@ -120,8 +129,16 @@
               下线
             </el-button>
 
-            <!-- 删除按钮 -->
-            <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
+            <!-- 删除按钮 - 非发布状态才能删除 -->
+            <el-button
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+              :disabled="row.status === 'PUBLISHED'"
+              :title="row.status === 'PUBLISHED' ? '已发布的内容需要先下线才能删除' : '删除内容'"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试用户权限</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #409EFF;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #409EFF;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #409EFF;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .button {
+            background: #409EFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #66b1ff;
+        }
+        .success {
+            color: #67C23A;
+        }
+        .error {
+            color: #F56C6C;
+        }
+        .warning {
+            color: #E6A23C;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #409EFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 用户权限检测工具</h1>
+        
+        <div class="section">
+            <h2>1. 登录信息</h2>
+            <button class="button" onclick="checkLogin()">检查登录状态</button>
+            <button class="button" onclick="checkUserInfo()">检查用户信息</button>
+            <button class="button" onclick="fetchUserInfo()">重新获取用户信息</button>
+            <pre id="loginInfo">点击按钮查看登录信息...</pre>
+        </div>
+
+        <div class="section">
+            <h2>2. 权限列表</h2>
+            <button class="button" onclick="checkPermissions()">检查权限</button>
+            <button class="button" onclick="checkRoles()">检查角色</button>
+            <pre id="permissionsInfo">点击按钮查看权限信息...</pre>
+        </div>
+
+        <div class="section">
+            <h2>3. 菜单权限检查</h2>
+            <button class="button" onclick="checkMenuPermissions()">检查菜单权限</button>
+            <div id="menuPermissions"></div>
+        </div>
+
+        <div class="section">
+            <h2>4. 修复建议</h2>
+            <button class="button" onclick="clearAndRelogin()">清除缓存并重新登录</button>
+            <pre id="fixSuggestions">点击按钮查看修复建议...</pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+
+        // 检查登录状态
+        function checkLogin() {
+            const token = localStorage.getItem('token');
+            const userInfo = localStorage.getItem('userInfo');
+            
+            let result = '=== 登录状态 ===\n\n';
+            
+            if (token) {
+                result += `✅ Token 存在\n`;
+                result += `Token: ${token.substring(0, 50)}...\n\n`;
+            } else {
+                result += `❌ Token 不存在\n\n`;
+            }
+            
+            if (userInfo) {
+                result += `✅ 用户信息存在\n`;
+                try {
+                    const parsed = JSON.parse(userInfo);
+                    result += `用户信息:\n${JSON.stringify(parsed, null, 2)}\n`;
+                } catch (e) {
+                    result += `❌ 用户信息解析失败: ${e.message}\n`;
+                }
+            } else {
+                result += `❌ 用户信息不存在\n`;
+            }
+            
+            document.getElementById('loginInfo').textContent = result;
+        }
+
+        // 检查用户信息
+        function checkUserInfo() {
+            const userInfo = localStorage.getItem('userInfo');
+            
+            if (!userInfo) {
+                document.getElementById('loginInfo').textContent = '❌ 用户信息不存在';
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(userInfo);
+                let result = '=== 用户信息详情 ===\n\n';
+                result += `用户ID: ${parsed.userId}\n`;
+                result += `用户名: ${parsed.username}\n`;
+                result += `昵称: ${parsed.nickname}\n`;
+                result += `邮箱: ${parsed.email}\n`;
+                result += `状态: ${parsed.status}\n\n`;
+                
+                result += `角色 (${parsed.roles?.length || 0}个):\n`;
+                if (parsed.roles && parsed.roles.length > 0) {
+                    parsed.roles.forEach(role => {
+                        result += `  - ${role}\n`;
+                    });
+                } else {
+                    result += `  ❌ 没有角色\n`;
+                }
+                
+                result += `\n权限 (${parsed.permissions?.length || 0}个):\n`;
+                if (parsed.permissions && parsed.permissions.length > 0) {
+                    parsed.permissions.forEach(perm => {
+                        result += `  - ${perm}\n`;
+                    });
+                } else {
+                    result += `  ❌ 没有权限\n`;
+                }
+                
+                document.getElementById('loginInfo').textContent = result;
+            } catch (e) {
+                document.getElementById('loginInfo').textContent = `❌ 解析失败: ${e.message}`;
+            }
+        }
+
+        // 重新获取用户信息
+        async function fetchUserInfo() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                document.getElementById('loginInfo').textContent = '❌ 未登录，无法获取用户信息';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.code === 200) {
+                    document.getElementById('loginInfo').textContent = 
+                        `✅ 获取成功\n\n${JSON.stringify(data.data, null, 2)}`;
+                    
+                    // 更新localStorage
+                    if (data.data) {
+                        localStorage.setItem('userInfo', JSON.stringify(data.data));
+                    }
+                } else {
+                    document.getElementById('loginInfo').textContent = 
+                        `❌ 获取失败: ${data.message}`;
+                }
+            } catch (error) {
+                document.getElementById('loginInfo').textContent = 
+                    `❌ 请求失败: ${error.message}`;
+            }
+        }
+
+        // 检查权限
+        function checkPermissions() {
+            const userInfo = localStorage.getItem('userInfo');
+            
+            if (!userInfo) {
+                document.getElementById('permissionsInfo').textContent = '❌ 用户信息不存在';
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(userInfo);
+                const permissions = parsed.permissions || [];
+                
+                let result = `=== 权限列表 (共${permissions.length}个) ===\n\n`;
+                
+                if (permissions.length === 0) {
+                    result += '❌ 没有任何权限！\n\n';
+                    result += '这可能是导致菜单不显示的原因。\n';
+                } else {
+                    permissions.forEach((perm, index) => {
+                        result += `${index + 1}. ${perm}\n`;
+                    });
+                }
+                
+                document.getElementById('permissionsInfo').textContent = result;
+            } catch (e) {
+                document.getElementById('permissionsInfo').textContent = `❌ 解析失败: ${e.message}`;
+            }
+        }
+
+        // 检查角色
+        function checkRoles() {
+            const userInfo = localStorage.getItem('userInfo');
+            
+            if (!userInfo) {
+                document.getElementById('permissionsInfo').textContent = '❌ 用户信息不存在';
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(userInfo);
+                const roles = parsed.roles || [];
+                
+                let result = `=== 角色列表 (共${roles.length}个) ===\n\n`;
+                
+                if (roles.length === 0) {
+                    result += '❌ 没有任何角色！\n';
+                } else {
+                    roles.forEach((role, index) => {
+                        result += `${index + 1}. ${role}\n`;
+                    });
+                    
+                    result += '\n角色说明:\n';
+                    result += '- SUPER_ADMIN: 超级管理员（所有权限）\n';
+                    result += '- ADMIN: 管理员（大部分权限）\n';
+                    result += '- EDITOR: 编辑（内容相关权限）\n';
+                    result += '- VIEWER: 查看者（只读权限）\n';
+                }
+                
+                document.getElementById('permissionsInfo').textContent = result;
+            } catch (e) {
+                document.getElementById('permissionsInfo').textContent = `❌ 解析失败: ${e.message}`;
+            }
+        }
+
+        // 检查菜单权限
+        function checkMenuPermissions() {
+            const userInfo = localStorage.getItem('userInfo');
+            
+            if (!userInfo) {
+                document.getElementById('menuPermissions').innerHTML = '<p class="error">❌ 用户信息不存在</p>';
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(userInfo);
+                const permissions = parsed.permissions || [];
+                const roles = parsed.roles || [];
+                
+                const isAdmin = roles.includes('ADMIN') || roles.includes('SUPER_ADMIN');
+                
+                const menus = [
+                    { name: '仪表盘', path: '/dashboard', requiredPermissions: [] },
+                    { name: '用户管理', path: '/users', requiredPermissions: ['user:view'] },
+                    { name: '站点管理', path: '/sites', requiredPermissions: ['site:view'] },
+                    { name: '内容管理', path: '/contents', requiredPermissions: ['content:view'] },
+                    { name: '分类管理', path: '/categories', requiredPermissions: ['category:list'] },
+                    { name: '工作流管理', path: '/workflows', requiredPermissions: ['workflow:view'] },
+                    { name: '工作流实例', path: '/workflow-instances', requiredPermissions: ['workflow:view'] },
+                    { name: '我的任务', path: '/workflow-tasks', requiredPermissions: [] },
+                    { name: '系统日志', path: '/logs', requiredPermissions: ['log:list'] }
+                ];
+                
+                let html = '<table>';
+                html += '<tr><th>菜单名称</th><th>路径</th><th>所需权限</th><th>是否可见</th></tr>';
+                
+                menus.forEach(menu => {
+                    const hasPermission = isAdmin || 
+                        menu.requiredPermissions.length === 0 || 
+                        menu.requiredPermissions.some(p => permissions.includes(p));
+                    
+                    const statusClass = hasPermission ? 'success' : 'error';
+                    const statusText = hasPermission ? '✅ 可见' : '❌ 不可见';
+                    
+                    html += '<tr>';
+                    html += `<td>${menu.name}</td>`;
+                    html += `<td>${menu.path}</td>`;
+                    html += `<td>${menu.requiredPermissions.join(', ') || '无需权限'}</td>`;
+                    html += `<td class="${statusClass}">${statusText}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</table>';
+                
+                if (isAdmin) {
+                    html += '<p class="success">✅ 您是管理员，可以看到所有菜单</p>';
+                } else {
+                    const visibleCount = menus.filter(menu => 
+                        menu.requiredPermissions.length === 0 || 
+                        menu.requiredPermissions.some(p => permissions.includes(p))
+                    ).length;
+                    
+                    html += `<p class="warning">⚠️ 您可以看到 ${visibleCount}/${menus.length} 个菜单</p>`;
+                }
+                
+                document.getElementById('menuPermissions').innerHTML = html;
+            } catch (e) {
+                document.getElementById('menuPermissions').innerHTML = `<p class="error">❌ 解析失败: ${e.message}</p>`;
+            }
+        }
+
+        // 清除缓存并重新登录
+        function clearAndRelogin() {
+            if (confirm('确定要清除所有缓存并重新登录吗？')) {
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                document.getElementById('fixSuggestions').textContent = 
+                    '✅ 缓存已清除\n\n请重新登录: http://localhost:3000/login';
+                
+                setTimeout(() => {
+                    window.location.href = 'http://localhost:3000/login';
+                }, 2000);
+            }
+        }
+
+        // 页面加载时自动检查
+        window.onload = function() {
+            checkLogin();
+        };
+    </script>
+</body>
+</html>
+

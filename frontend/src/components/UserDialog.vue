@@ -86,6 +86,7 @@
           multiple
           placeholder="请选择角色"
           style="width: 100%"
+          :disabled="isEdit"
         >
           <el-option label="超级管理员" :value="1" />
           <el-option label="站点管理员" :value="2" />
@@ -93,6 +94,9 @@
           <el-option label="审核者" :value="4" />
           <el-option label="查看者" :value="5" />
         </el-select>
+        <div v-if="isEdit" style="color: #909399; font-size: 12px; margin-top: 5px;">
+          注意：编辑用户时不能修改角色
+        </div>
       </el-form-item>
     </el-form>
 
