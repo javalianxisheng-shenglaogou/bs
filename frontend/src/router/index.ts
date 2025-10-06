@@ -60,7 +60,7 @@ const routes: RouteRecordRaw[] = [
           title: '内容管理',
           icon: 'Document',
           showInMenu: true,
-          permissions: ['content:view']
+          permissions: ['content:list']  // 修改为content:list，审批员有此权限
         }
       },
       {
@@ -82,7 +82,7 @@ const routes: RouteRecordRaw[] = [
           title: '工作流管理',
           icon: 'Connection',
           showInMenu: true,
-          permissions: ['workflow:view']
+          permissions: ['workflow:list']  // 修改为workflow:list，审批员有此权限
         }
       },
       {
@@ -103,7 +103,7 @@ const routes: RouteRecordRaw[] = [
           title: '工作流实例',
           icon: 'List',
           showInMenu: true,
-          permissions: ['workflow:view']
+          permissions: ['workflow:list']  // 修改为workflow:list，审批员有此权限
         }
       },
       {
@@ -114,7 +114,7 @@ const routes: RouteRecordRaw[] = [
           title: '我的任务',
           icon: 'Checked',
           showInMenu: true,
-          permissions: ['workflow:view']
+          permissions: ['workflow:list']  // 修改为workflow:list，审批员有此权限
         }
       },
       {

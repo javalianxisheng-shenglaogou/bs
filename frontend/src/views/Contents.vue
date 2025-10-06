@@ -119,6 +119,16 @@
               发布
             </el-button>
 
+            <!-- 审批员：审批按钮 - 审批中状态 -->
+            <el-button
+              v-if="userStore.hasPermission('content:review') && row.approvalStatus === 'PENDING'"
+              type="primary"
+              size="small"
+              @click="handleApprove(row)"
+            >
+              审批
+            </el-button>
+
             <!-- 下线按钮 - 已发布状态 -->
             <el-button
               v-if="row.status === 'PUBLISHED'"
@@ -258,6 +268,14 @@
       :content-title="currentContent?.title || ''"
       @success="handleSubmitApprovalSuccess"
     />
+
+    <!-- 审批对话框 -->
+    <ApproveContentDialog
+      v-model:visible="approveDialogVisible"
+      :content-id="currentContent?.id || 0"
+      :content-title="currentContent?.title || ''"
+      @success="handleApproveSuccess"
+    />
   </div>
 </template>
 
@@ -279,6 +297,7 @@ import { getAllSitesApi, type Site } from '@/api/site'
 import { useUserStore } from '@/store/user'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import SubmitApprovalDialog from '@/components/SubmitApprovalDialog.vue'
+import ApproveContentDialog from '@/components/ApproveContentDialog.vue'
 
 const userStore = useUserStore()
 
@@ -302,6 +321,7 @@ const formRef = ref<FormInstance>()
 const isEdit = ref(false)
 const siteList = ref<Site[]>([])
 const submitApprovalDialogVisible = ref(false)
+const approveDialogVisible = ref(false)
 const currentContent = ref<Content | null>(null)
 
 // 表单数据
@@ -521,6 +541,17 @@ const handleSubmitApproval = (row: Content) => {
 
 // 提交审批成功回调
 const handleSubmitApprovalSuccess = async () => {
+  await loadContents()
+}
+
+// 审批内容
+const handleApprove = (row: Content) => {
+  currentContent.value = row
+  approveDialogVisible.value = true
+}
+
+// 审批成功回调
+const handleApproveSuccess = async () => {
   await loadContents()
 }
 
