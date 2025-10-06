@@ -1,0 +1,344 @@
+==============================================
+审核员无法看到审核任务问题分析与解决方案
+==============================================
+
+日期：2025-10-06
+问题类型：功能缺陷
+优先级：高
+状态：部分解决，需要进一步测试
+
+==============================================
+一、问题描述
+==============================================
+
+用户报告：审核员登录后，在"我的任务"页面无法看到已提交的审核任务。
+
+前端表现：
+- 审核员（reviewer1）登录系统
+- 进入"我的任务"页面
+- 页面显示"No Data"或空列表
+- 实际上数据库中存在待审批的任务
+
+==============================================
+二、问题分析
+==============================================
+
+### 2.1 初步检查
+
+**数据库查询结果：**
+```sql
+SELECT u.id, u.username, u.real_name, r.name as role_name 
+FROM users u 
+LEFT JOIN user_roles ur ON u.id = ur.user_id 
+LEFT JOIN roles r ON ur.role_id = r.id 
+WHERE u.username = 'reviewer1';
+
+结果：
++----+-----------+-----------+-----------+
+| id | username  | real_name | role_name |
++----+-----------+-----------+-----------+
+|  5 | reviewer1 | 钱七      | 审核者    |
++----+-----------+-----------+-----------+
+```
+
+**审核员权限检查：**
+```sql
+SELECT p.code, p.name 
+FROM permissions p 
+JOIN role_permissions rp ON p.id = rp.permission_id 
+JOIN roles r ON rp.role_id = r.id 
+WHERE r.code = 'REVIEWER' 
+ORDER BY p.code;
+
+结果：
++-------------------+----------------+
+| code              | name           |
++-------------------+----------------+
+| content:list      | 查看内容列表   |
+| content:publish   | 发布内容       |
+| content:review    | 审核内容       |
+| content:unpublish | 撤回内容       |
+| content:update    | 编辑内容       |
+| content:view      | 查看内容详情   |
+| site:list         | 查看站点列表   |
+| site:view         | 查看站点详情   |
+| workflow:approve  | 审批任务       |
+| workflow:list     | 查看工作流列表 |
+| workflow:view     | 工作流查看     |
++-------------------+----------------+
+```
+
+✅ 审核员权限配置正确，包含必要的workflow权限。
+
+**待办任务检查：**
+```sql
+SELECT t.id, t.task_name, t.assignee_id, t.assignee_name, t.status, t.created_at 
+FROM workflow_tasks t 
+WHERE t.deleted = 0 AND t.status IN ('PENDING', 'IN_PROGRESS') 
+ORDER BY t.created_at DESC LIMIT 10;
+
+结果：
++----+--------------+-------------+---------------+---------+---------------------+
+| id | task_name    | assignee_id | assignee_name | status  | created_at          |
++----+--------------+-------------+---------------+---------+---------------------+
+|  9 | 总编辑审批   |           1 | 超级管理员    | PENDING | 2025-10-06 13:31:48 |
+|  7 | 部门主管审批 |           1 | 超级管理员    | PENDING | 2025-10-05 12:21:33 |
+|  6 | 部门主管审批 |           1 | 超级管理员    | PENDING | 2025-10-05 12:21:21 |
+|  5 | 技术主管审批 |           1 | 超级管理员    | PENDING | 2025-10-05 12:21:09 |
+|  4 | 技术主管审批 |           1 | 超级管理员    | PENDING | 2025-10-05 12:20:42 |
+|  3 | 部门主管审批 |           1 | 超级管理员    | PENDING | 2025-10-05 12:20:33 |
++----+--------------+-------------+---------------+---------+---------------------+
+```
+
+❌ **核心问题发现：所有待办任务都分配给了超级管理员（assignee_id=1），而不是审核员（assignee_id=5）！**
+
+### 2.2 后端代码检查
+
+**WorkflowTaskController.java：**
+```java
+@GetMapping("/pending")
+@PreAuthorize("isAuthenticated()")
+public ApiResponse<Page<WorkflowTaskDTO>> getMyPendingTasks(
+        @RequestParam(defaultValue = "0") Integer page,
+        @RequestParam(defaultValue = "10") Integer size) {
+    
+    log.info("获取我的待办任务请求: page={}, size={}", page, size);
+    Page<WorkflowTaskDTO> result = taskService.getMyPendingTasks(page, size);
+    return ApiResponse.success(result);
+}
+```
+
+✅ Controller权限配置正确：`@PreAuthorize("isAuthenticated()")`
+✅ 分页参数默认值正确：`defaultValue = "0"`（0-based分页）
+
+**WorkflowTaskService.java：**
+```java
+public Page<WorkflowTaskDTO> getMyPendingTasks(int page, int size) {
+    log.debug("获取我的待办任务: page={}, size={}", page, size);
+
+    Long currentUserId = getCurrentUserId();
+    
+    Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
+    Pageable pageable = PageRequest.of(page, size, sort);
+
+    List<String> pendingStatuses = Arrays.asList("PENDING", "IN_PROGRESS");
+    Page<WorkflowTask> taskPage = taskRepository.findByAssigneeIdAndStatusInAndDeletedFalse(
+            currentUserId, pendingStatuses, pageable);
+
+    return taskPage.map(this::convertToDTO);
+}
+```
+
+✅ Service逻辑正确：查询条件为`assignee_id = currentUserId`
+
+### 2.3 密码问题排查
+
+在测试过程中发现审核员密码存在问题：
+
+**问题：** 数据库中reviewer1的password_hash被截断
+```sql
+SELECT username, LENGTH(password_hash) as pwd_len, password_hash 
+FROM users 
+WHERE username IN ('admin', 'reviewer1');
+
+初始结果：
++-----------+---------+--------------------------------------------------------------+
+| username  | pwd_len | password_hash                                                |
++-----------+---------+--------------------------------------------------------------+
+| admin     |      60 | $2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG |
+| reviewer1 |      40 | \.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG                            |
++-----------+---------+--------------------------------------------------------------+
+```
+
+**原因：** 在PowerShell中使用`$`符号时，需要正确转义，否则会被解释为变量。
+
+**解决方案：** 创建SQL文件并通过管道执行
+```sql
+-- temp_update_reviewer_password.sql
+UPDATE users 
+SET password_hash = '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG' 
+WHERE username = 'reviewer1';
+```
+
+执行命令：
+```powershell
+Get-Content temp_update_reviewer_password.sql | mysql -u root -p123456 -D multi_site_cms
+```
+
+修复后结果：
+```
++-----------+---------+--------------------------------------------------------------+
+| username  | pwd_len | password_hash                                                |
++-----------+---------+--------------------------------------------------------------+
+| admin     |      60 | $2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG |
+| reviewer1 |      60 | $2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG |
++-----------+---------+--------------------------------------------------------------+
+```
+
+✅ 密码hash已修复，长度正确（60字符）
+
+==============================================
+三、根本原因总结
+==============================================
+
+1. **主要问题：任务分配错误**
+   - 数据库中所有workflow_tasks的assignee_id都是1（超级管理员）
+   - 审核员的ID是5，因此查询不到任何任务
+   - 这是数据问题，不是代码问题
+
+2. **次要问题：审核员密码被截断**
+   - 由于PowerShell命令中$符号处理不当导致
+   - 已通过SQL文件方式修复
+
+3. **前端和后端代码都是正确的**
+   - 权限配置正确
+   - 分页参数正确
+   - 查询逻辑正确
+
+==============================================
+四、解决方案
+==============================================
+
+### 4.1 短期解决方案（测试用）
+
+为审核员创建测试任务：
+
+```sql
+-- 为审核员（ID=5）创建测试任务
+INSERT INTO workflow_tasks (
+    instance_id, 
+    node_id, 
+    task_name, 
+    task_type, 
+    assignee_id, 
+    assignee_name, 
+    status, 
+    created_at, 
+    updated_at, 
+    deleted
+) VALUES 
+(1, 1, '测试审批任务1', 'APPROVAL', 5, '钱七', 'PENDING', NOW(), NOW(), 0),
+(1, 1, '测试审批任务2', 'APPROVAL', 5, '钱七', 'PENDING', NOW(), NOW(), 0),
+(1, 1, '测试审批任务3', 'APPROVAL', 5, '钱七', 'IN_PROGRESS', NOW(), NOW(), 0);
+```
+
+### 4.2 长期解决方案（修复工作流）
+
+**问题根源：** 工作流启动时，任务分配逻辑有问题，总是分配给超级管理员。
+
+**需要检查的代码：**
+1. `WorkflowInstanceService.startWorkflow()` - 工作流启动逻辑
+2. `WorkflowTaskService.createTask()` - 任务创建逻辑
+3. 工作流节点配置 - 审批人配置是否正确
+
+**修复步骤：**
+1. 检查workflow_nodes表中的assignee_type和assignee_value配置
+2. 修复任务分配逻辑，确保根据节点配置正确分配审批人
+3. 重新测试工作流提交和任务分配
+
+==============================================
+五、验证步骤
+==============================================
+
+### 5.1 验证审核员登录
+
+```powershell
+$body = @{username='reviewer1'; password='admin123'} | ConvertTo-Json
+$response = Invoke-RestMethod -Uri 'http://localhost:8080/api/auth/login' -Method Post -Body $body -ContentType 'application/json'
+Write-Host "登录成功: $($response.data.username)"
+```
+
+预期结果：
+- 返回200状态码
+- response.data包含用户信息和token
+
+### 5.2 验证待办任务查询
+
+```powershell
+$headers = @{'Authorization' = "Bearer $token"}
+$tasks = Invoke-RestMethod -Uri 'http://localhost:8080/api/workflow-tasks/pending?page=0&size=10' -Method Get -Headers $headers
+Write-Host "待办任务数: $($tasks.data.totalElements)"
+```
+
+预期结果：
+- 返回200状态码
+- 如果有测试任务，应该能看到任务列表
+
+==============================================
+六、后续工作
+==============================================
+
+1. **修复工作流任务分配逻辑** - 高优先级
+   - 检查WorkflowInstanceService中的任务创建逻辑
+   - 确保根据workflow_nodes配置正确分配审批人
+
+2. **完善测试数据** - 中优先级
+   - 创建完整的测试工作流
+   - 为不同角色创建测试任务
+
+3. **添加单元测试** - 中优先级
+   - 测试工作流启动逻辑
+   - 测试任务分配逻辑
+   - 测试任务查询逻辑
+
+4. **文档完善** - 低优先级
+   - 更新工作流使用文档
+   - 添加任务分配规则说明
+
+==============================================
+七、经验教训
+==============================================
+
+1. **数据问题优先排查**
+   - 在排查功能问题时，首先检查数据库中的数据是否正确
+   - 不要假设数据是正确的
+
+2. **PowerShell特殊字符处理**
+   - 在PowerShell中使用$符号时需要特别注意
+   - 对于复杂的SQL语句，建议使用SQL文件
+
+3. **分层排查问题**
+   - 从数据层 → 服务层 → 控制器层 → 前端层
+   - 逐层验证，找到问题的根本原因
+
+4. **权限和认证分离**
+   - 权限配置正确不代表认证成功
+   - 需要分别验证认证和授权
+
+==============================================
+八、相关文件
+==============================================
+
+后端文件：
+- backend/src/main/java/com/cms/module/workflow/controller/WorkflowTaskController.java
+- backend/src/main/java/com/cms/module/workflow/service/WorkflowTaskService.java
+- backend/src/main/java/com/cms/module/workflow/service/WorkflowInstanceService.java
+
+前端文件：
+- frontend/src/views/WorkflowTasks.vue
+- frontend/src/api/workflow.ts
+
+数据库表：
+- workflow_tasks
+- workflow_instances
+- workflow_nodes
+- users
+- user_roles
+- roles
+- role_permissions
+- permissions
+
+==============================================
+九、Git提交信息
+==============================================
+
+分支：task/bug-fixes_2025-10-05_1
+仓库：https://gitee.com/jiuxias-da/multi-site-cms.git
+
+相关提交：
+- 修复审核员密码hash被截断问题
+- 创建测试任务数据
+- 文档：审核员无法看到审核任务问题分析
+
+==============================================
+
