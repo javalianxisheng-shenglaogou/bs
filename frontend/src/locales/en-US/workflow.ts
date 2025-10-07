@@ -9,6 +9,8 @@ export default {
   taskDetail: 'Task Details',
   approve: 'Approve',
   reject: 'Reject',
+  submitApproval: 'Submit for Approval',
+  withdrawApproval: 'Withdraw Approval',
   
   fields: {
     id: 'ID',

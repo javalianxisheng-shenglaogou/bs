@@ -6,7 +6,10 @@ import menu from './menu'
 import user from './user'
 import content from './content'
 import site from './site'
+import category from './category'
 import workflow from './workflow'
+import dashboard from './dashboard'
+import log from './log'
 
 export default {
   common,
@@ -14,6 +17,9 @@ export default {
   user,
   content,
   site,
-  workflow
+  category,
+  workflow,
+  dashboard,
+  log
 }
 

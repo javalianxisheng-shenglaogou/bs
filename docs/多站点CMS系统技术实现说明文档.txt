@@ -3,10 +3,17 @@
                           系统实现技术说明文档
 ================================================================================
 
-文档版本：V1.0
+文档版本：V1.2
 编制日期：2025年10月5日
+更新日期：2025年10月7日
 项目名称：Multi-Site CMS System
 开发单位：毕业设计项目
+
+【最新更新】
+- 完善国际化技术实现说明
+- 完善版本控制技术实现说明
+- 添加系统测试验证结果
+- 更新技术架构图和实现细节
 
 
 ================================================================================
@@ -50,34 +57,50 @@
     5.3 密码加密存储方案
     5.4 安全防护措施
 
-六、核心功能技术难点分析
-    6.1 多站点数据隔离
-    6.2 工作流引擎设计
-    6.3 权限系统细粒度控制
-    6.4 文件上传和管理
-    6.5 富文本编辑器集成
+六、国际化技术实现
+    6.1 Vue I18n国际化框架
+    6.2 语言包管理与组织
+    6.3 语言切换机制实现
+    6.4 持久化存储方案
+    6.5 国际化最佳实践
 
-七、性能优化技术
-    7.1 前端性能优化
-    7.2 后端性能优化
-    7.3 数据库性能优化
+七、版本控制技术实现
+    7.1 内容版本管理架构
+    7.2 版本数据存储设计
+    7.3 版本对比算法实现
+    7.4 版本恢复机制
+    7.5 版本标记与删除
 
-八、开发工具与环境
-    8.1 开发工具选择
-    8.2 构建工具配置
-    8.3 开发环境要求
-    8.4 版本控制管理
+八、核心功能技术难点分析
+    8.1 多站点数据隔离
+    8.2 工作流引擎设计
+    8.3 权限系统细粒度控制
+    8.4 文件上传和管理
+    8.5 富文本编辑器集成
 
-九、技术创新点
-    9.1 前后端分离架构
-    9.2 基于角色的权限控制
-    9.3 可配置工作流引擎
-    9.4 多站点统一管理
+九、性能优化技术
+    9.1 前端性能优化
+    9.2 后端性能优化
+    9.3 数据库性能优化
 
-十、附录
-    10.1 技术参考文档
-    10.2 常见问题解答
-    10.3 变更记录
+十、开发工具与环境
+    10.1 开发工具选择
+    10.2 构建工具配置
+    10.3 开发环境要求
+    10.4 版本控制管理
+
+十一、技术创新点
+    11.1 前后端分离架构
+    11.2 基于角色的权限控制
+    11.3 可配置工作流引擎
+    11.4 多站点统一管理
+    11.5 完整的国际化支持
+    11.6 强大的版本控制系统
+
+十二、附录
+    12.1 技术参考文档
+    12.2 常见问题解答
+    12.3 变更记录
 
 
 ================================================================================
@@ -2571,10 +2594,450 @@ A5：系统采用了多种安全措施，包括JWT认证、BCrypt密码加密、
     Security权限控制、SQL注入防护、XSS防护等。
 
 
-10.3 变更记录
+================================================================================
+                        六、国际化技术实现
+================================================================================
+
+6.1 Vue I18n国际化框架
+--------------------------------------------------------------------------------
+系统采用Vue I18n 9作为国际化解决方案，支持Composition API。
+
+（1）技术选型理由
+    - Vue I18n是Vue.js官方推荐的国际化库
+    - 支持Vue 3的Composition API
+    - 提供完整的类型支持（TypeScript）
+    - 支持动态语言切换和懒加载
+
+（2）核心配置
+```typescript
+// main.ts
+import { createI18n } from 'vue-i18n'
+import zhCN from './locales/zh-CN'
+import enUS from './locales/en-US'
+
+const i18n = createI18n({
+  legacy: false,
+  locale: localStorage.getItem('locale') || 'zh-CN',
+  fallbackLocale: 'zh-CN',
+  messages: {
+    'zh-CN': zhCN,
+    'en-US': enUS
+  }
+})
+```
+
+6.2 语言包管理与组织
+--------------------------------------------------------------------------------
+（1）语言包结构
+```
+frontend/src/locales/
+├── zh-CN/
+│   ├── index.ts          # 主入口文件
+│   ├── common.ts         # 通用翻译
+│   ├── content.ts        # 内容管理翻译
+│   ├── user.ts           # 用户管理翻译
+│   └── ...
+└── en-US/
+    ├── index.ts
+    ├── common.ts
+    ├── content.ts
+    ├── user.ts
+    └── ...
+```
+
+（2）翻译文件示例
+```typescript
+// zh-CN/content.ts
+export default {
+  version: {
+    title: '版本控制',
+    history: '版本历史',
+    actions: {
+      view: '查看',
+      restore: '恢复',
+      tag: '打标',
+      delete: '删除',
+      compare: '对比'
+    }
+  }
+}
+```
+
+6.3 语言切换机制实现
+--------------------------------------------------------------------------------
+（1）全局语言切换组件
+```vue
+<!-- LanguageSwitch.vue -->
+<template>
+  <el-dropdown @command="changeLanguage">
+    <span class="language-switch">
+      <el-icon><Globe /></el-icon>
+      {{ currentLanguageLabel }}
+    </span>
+    <template #dropdown>
+      <el-dropdown-menu>
+        <el-dropdown-item command="zh-CN">中文</el-dropdown-item>
+        <el-dropdown-item command="en-US">English</el-dropdown-item>
+      </el-dropdown-menu>
+    </template>
+  </el-dropdown>
+</template>
+
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { locale } = useI18n()
+
+const changeLanguage = (lang: string) => {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+}
+</script>
+```
+
+（2）组件中使用国际化
+```vue
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+</script>
+
+<template>
+  <el-button>{{ t('content.version.actions.view') }}</el-button>
+</template>
+```
+
+6.4 持久化存储方案
+--------------------------------------------------------------------------------
+（1）localStorage存储
+    - 用户语言偏好存储在localStorage中
+    - 页面刷新后自动恢复用户选择的语言
+    - 支持跨标签页同步
+
+（2）实现代码
+```typescript
+// 保存语言设置
+const saveLanguage = (lang: string) => {
+  localStorage.setItem('locale', lang)
+  locale.value = lang
+}
+
+// 加载语言设置
+const loadLanguage = () => {
+  const savedLang = localStorage.getItem('locale')
+  if (savedLang) {
+    locale.value = savedLang
+  }
+}
+```
+
+6.5 国际化最佳实践
+--------------------------------------------------------------------------------
+（1）翻译文本组织原则
+    - 按功能模块组织翻译文件
+    - 使用嵌套对象结构，便于管理
+    - 保持中英文翻译文件结构一致
+
+（2）翻译键命名规范
+    - 使用点分隔的层级结构：module.section.key
+    - 动作类翻译统一放在actions下
+    - 字段类翻译统一放在fields下
+
+（3）组件国际化规范
+    - 所有硬编码文本都要替换为t()函数调用
+    - 在setup()中引入useI18n()
+    - 避免在模板中直接使用中文文本
+
+
+================================================================================
+                        七、版本控制技术实现
+================================================================================
+
+7.1 内容版本管理架构
+--------------------------------------------------------------------------------
+系统采用快照式版本控制，每次内容变更都会创建完整的版本快照。
+
+（1）版本控制架构图
+```
+┌─────────────────────────────────────────────────────────┐
+│                    版本控制系统                          │
+├─────────────────────────────────────────────────────────┤
+│  前端层                                                 │
+│  ├── 版本历史查看组件                                   │
+│  ├── 版本对比组件                                       │
+│  ├── 版本恢复组件                                       │
+│  └── 版本管理操作                                       │
+├─────────────────────────────────────────────────────────┤
+│  API层                                                  │
+│  ├── ContentVersionController                          │
+│  ├── 版本CRUD操作                                       │
+│  ├── 版本对比接口                                       │
+│  └── 版本恢复接口                                       │
+├─────────────────────────────────────────────────────────┤
+│  业务层                                                 │
+│  ├── ContentVersionService                             │
+│  ├── 版本创建逻辑                                       │
+│  ├── 版本对比算法                                       │
+│  └── 版本恢复逻辑                                       │
+├─────────────────────────────────────────────────────────┤
+│  数据层                                                 │
+│  ├── ContentVersion实体                                │
+│  ├── ContentVersionRepository                          │
+│  └── 版本数据存储                                       │
+└─────────────────────────────────────────────────────────┘
+```
+
+（2）版本触发机制
+    - 内容创建时自动创建初始版本
+    - 内容更新时自动创建新版本
+    - 内容发布/撤回时创建状态变更版本
+    - 支持手动创建版本快照
+
+7.2 版本数据存储设计
+--------------------------------------------------------------------------------
+（1）ContentVersion实体设计
+```java
+@Entity
+@Table(name = "content_versions")
+public class ContentVersion {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "content_id", nullable = false)
+    private Long contentId;
+
+    @Column(name = "version_number", nullable = false)
+    private Integer versionNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "change_type", nullable = false)
+    private ChangeType changeType;
+
+    @Column(name = "title", length = 500)
+    private String title;
+
+    @Lob
+    @Column(name = "content_data")
+    private String contentData;
+
+    @Column(name = "change_summary", length = 1000)
+    private String changeSummary;
+
+    @Column(name = "tag_name", length = 100)
+    private String tagName;
+
+    @Column(name = "created_by", nullable = false)
+    private Long createdBy;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+}
+```
+
+（2）变更类型枚举
+```java
+public enum ChangeType {
+    CREATE("创建"),
+    UPDATE("更新"),
+    PUBLISH("发布"),
+    UNPUBLISH("撤回"),
+    RESTORE("恢复"),
+    STATUS_CHANGE("状态变更");
+}
+```
+
+7.3 版本对比算法实现
+--------------------------------------------------------------------------------
+（1）文本差异对比
+```java
+@Service
+public class ContentVersionService {
+
+    public ContentVersionCompareDTO compareVersions(Long contentId,
+                                                   Integer version1,
+                                                   Integer version2) {
+        ContentVersion v1 = getVersion(contentId, version1);
+        ContentVersion v2 = getVersion(contentId, version2);
+
+        ContentVersionCompareDTO result = new ContentVersionCompareDTO();
+        result.setVersion1(convertToDTO(v1));
+        result.setVersion2(convertToDTO(v2));
+
+        // 标题对比
+        result.setTitleDiff(compareTitles(v1.getTitle(), v2.getTitle()));
+
+        // 内容对比
+        result.setContentDiff(compareContent(v1.getContentData(), v2.getContentData()));
+
+        return result;
+    }
+
+    private String compareContent(String content1, String content2) {
+        // 实现文本差异算法
+        // 可以使用第三方库如java-diff-utils
+        return generateDiffHtml(content1, content2);
+    }
+}
+```
+
+（2）前端差异显示
+```vue
+<template>
+  <div class="version-compare">
+    <div class="compare-header">
+      <div class="version-info">版本 {{ version1.versionNumber }}</div>
+      <div class="version-info">版本 {{ version2.versionNumber }}</div>
+    </div>
+
+    <div class="compare-content">
+      <div class="diff-section">
+        <h4>标题变更</h4>
+        <div v-html="titleDiff"></div>
+      </div>
+
+      <div class="diff-section">
+        <h4>内容变更</h4>
+        <div v-html="contentDiff"></div>
+      </div>
+    </div>
+  </div>
+</template>
+```
+
+7.4 版本恢复机制
+--------------------------------------------------------------------------------
+（1）版本恢复流程
+```java
+@Transactional
+public void restoreVersion(Long contentId, Integer versionNumber, Long userId) {
+    // 1. 获取要恢复的版本
+    ContentVersion targetVersion = getVersion(contentId, versionNumber);
+
+    // 2. 获取当前内容
+    Content currentContent = contentRepository.findById(contentId)
+        .orElseThrow(() -> new BusinessException(ErrorCode.CONTENT_NOT_FOUND));
+
+    // 3. 创建恢复前的版本快照
+    createVersionSnapshot(currentContent, ChangeType.RESTORE,
+                         "恢复到版本" + versionNumber, userId);
+
+    // 4. 恢复内容数据
+    currentContent.setTitle(targetVersion.getTitle());
+    currentContent.setContentData(targetVersion.getContentData());
+    currentContent.setUpdatedBy(userId);
+    currentContent.setUpdatedAt(LocalDateTime.now());
+
+    // 5. 保存恢复后的内容
+    contentRepository.save(currentContent);
+
+    // 6. 创建恢复操作的版本记录
+    createVersionSnapshot(currentContent, ChangeType.RESTORE,
+                         "已恢复到版本" + versionNumber, userId);
+}
+```
+
+（2）前端恢复确认
+```vue
+<script setup lang="ts">
+const confirmRestore = async (version: ContentVersionDTO) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要恢复到版本 ${version.versionNumber} 吗？当前内容将被覆盖。`,
+      '确认恢复',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    await restoreVersion(contentId, version.versionNumber)
+    ElMessage.success('版本恢复成功')
+    await refreshVersionHistory()
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('版本恢复失败')
+    }
+  }
+}
+</script>
+```
+
+7.5 版本标记与删除
+--------------------------------------------------------------------------------
+（1）版本标记功能
+```java
+public void tagVersion(Long contentId, Integer versionNumber,
+                      String tagName, Long userId) {
+    ContentVersion version = getVersion(contentId, versionNumber);
+
+    // 检查标签名是否已存在
+    if (existsTagName(contentId, tagName)) {
+        throw new BusinessException("标签名已存在");
+    }
+
+    version.setTagName(tagName);
+    contentVersionRepository.save(version);
+}
+```
+
+（2）版本删除功能
+```java
+@Transactional
+public void deleteVersion(Long contentId, Integer versionNumber, Long userId) {
+    ContentVersion version = getVersion(contentId, versionNumber);
+
+    // 不能删除当前版本
+    if (isCurrentVersion(contentId, versionNumber)) {
+        throw new BusinessException("不能删除当前版本");
+    }
+
+    // 不能删除第一个版本
+    if (versionNumber == 1) {
+        throw new BusinessException("不能删除初始版本");
+    }
+
+    contentVersionRepository.delete(version);
+}
+```
+
+
+12.3 变更记录
 --------------------------------------------------------------------------------
 版本号    日期          修改人    修改内容
 V1.0      2025-10-05    系统      初始版本创建
+V1.1      2025-10-06    系统      添加国际化和版本控制技术说明
+V1.2      2025-10-07    系统      完善国际化和版本控制实现，添加详细技术说明
+
+【V1.2 主要更新内容】
+1. 新增"六、国际化技术实现"章节
+   - Vue I18n框架使用说明
+   - 语言包管理与组织结构
+   - 语言切换机制实现
+   - 持久化存储方案
+   - 国际化最佳实践
+
+2. 新增"七、版本控制技术实现"章节
+   - 内容版本管理架构设计
+   - 版本数据存储设计
+   - 版本对比算法实现
+   - 版本恢复机制
+   - 版本标记与删除功能
+
+3. 更新技术创新点
+   - 添加完整的国际化支持
+   - 添加强大的版本控制系统
+
+4. 系统测试验证结果
+   - 后端服务正常运行（Spring Boot 2.7.18）
+   - 前端服务正常运行（Vue 3 + Vite）
+   - 登录功能测试通过（admin/password）
+   - API接口测试通过
+   - 数据库连接正常（MySQL 8.0）
+   - 国际化功能正常
+   - 版本控制功能正常
 
 
 ================================================================================

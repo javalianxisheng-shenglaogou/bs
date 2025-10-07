@@ -3,9 +3,9 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>内容列表</span>
+          <span>{{ t('content.list') }}</span>
           <div>
-            <el-select v-model="selectedSite" placeholder="选择站点" clearable style="width: 150px; margin-right: 10px">
+            <el-select v-model="selectedSite" :placeholder="t('site.placeholder.selectSite')" clearable style="width: 150px; margin-right: 10px">
               <el-option
                 v-for="site in siteList"
                 :key="site.id"
@@ -13,15 +13,15 @@
                 :value="site.id || 0"
               />
             </el-select>
-            <el-select v-model="selectedStatus" placeholder="状态" clearable style="width: 120px; margin-right: 10px">
-              <el-option label="草稿" value="DRAFT" />
-              <el-option label="待审核" value="PENDING" />
-              <el-option label="已发布" value="PUBLISHED" />
-              <el-option label="已归档" value="ARCHIVED" />
+            <el-select v-model="selectedStatus" :placeholder="t('content.placeholder.selectStatus')" clearable style="width: 120px; margin-right: 10px">
+              <el-option :label="t('content.status.draft')" value="DRAFT" />
+              <el-option :label="t('content.status.pending')" value="PENDING" />
+              <el-option :label="t('content.status.published')" value="PUBLISHED" />
+              <el-option :label="t('content.status.archived')" value="ARCHIVED" />
             </el-select>
             <el-button type="primary" @click="handleAdd">
               <el-icon><Plus /></el-icon>
-              新增内容
+              {{ t('content.add') }}
             </el-button>
           </div>
         </div>
@@ -30,43 +30,43 @@
       <!-- 内容表格 -->
       <el-table :data="contentList" border stripe v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
-        <el-table-column label="内容类型" width="100">
+        <el-table-column prop="title" :label="t('content.fields.title')" min-width="200" show-overflow-tooltip />
+        <el-table-column :label="t('content.fields.contentType')" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.contentType === 'ARTICLE'" type="primary">文章</el-tag>
-            <el-tag v-else-if="row.contentType === 'PAGE'" type="success">页面</el-tag>
-            <el-tag v-else-if="row.contentType === 'NEWS'" type="warning">新闻</el-tag>
-            <el-tag v-else>其他</el-tag>
+            <el-tag v-if="row.contentType === 'ARTICLE'" type="primary">{{ t('content.contentTypes.article') }}</el-tag>
+            <el-tag v-else-if="row.contentType === 'PAGE'" type="success">{{ t('content.contentTypes.page') }}</el-tag>
+            <el-tag v-else-if="row.contentType === 'NEWS'" type="warning">{{ t('content.contentTypes.news') }}</el-tag>
+            <el-tag v-else>{{ t('content.contentTypes.other') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column :label="t('content.fields.status')" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.status === 'PUBLISHED'" type="success">已发布</el-tag>
-            <el-tag v-else-if="row.status === 'DRAFT'" type="info">草稿</el-tag>
-            <el-tag v-else-if="row.status === 'PENDING'" type="warning">待审核</el-tag>
-            <el-tag v-else type="info">已归档</el-tag>
+            <el-tag v-if="row.status === 'PUBLISHED'" type="success">{{ t('content.status.published') }}</el-tag>
+            <el-tag v-else-if="row.status === 'DRAFT'" type="info">{{ t('content.status.draft') }}</el-tag>
+            <el-tag v-else-if="row.status === 'PENDING'" type="warning">{{ t('content.status.pending') }}</el-tag>
+            <el-tag v-else type="info">{{ t('content.status.archived') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="审批状态" width="100">
+        <el-table-column :label="t('content.fields.approvalStatus')" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.approvalStatus === 'APPROVED'" type="success">已通过</el-tag>
-            <el-tag v-else-if="row.approvalStatus === 'PENDING'" type="warning">审批中</el-tag>
-            <el-tag v-else-if="row.approvalStatus === 'REJECTED'" type="danger">已拒绝</el-tag>
-            <el-tag v-else-if="row.status === 'DRAFT' && (!row.approvalStatus || row.approvalStatus === 'NONE')" type="info">未提交</el-tag>
-            <el-tag v-else-if="row.status === 'PUBLISHED' && row.approvalStatus === 'APPROVED'" type="success">已通过</el-tag>
-            <el-tag v-else type="info">无需审批</el-tag>
+            <el-tag v-if="row.approvalStatus === 'APPROVED'" type="success">{{ t('content.approvalStatus.approved') }}</el-tag>
+            <el-tag v-else-if="row.approvalStatus === 'PENDING'" type="warning">{{ t('content.approvalStatus.pending') }}</el-tag>
+            <el-tag v-else-if="row.approvalStatus === 'REJECTED'" type="danger">{{ t('content.approvalStatus.rejected') }}</el-tag>
+            <el-tag v-else-if="row.status === 'DRAFT' && (!row.approvalStatus || row.approvalStatus === 'NONE')" type="info">{{ t('content.approvalStatus.none') }}</el-tag>
+            <el-tag v-else-if="row.status === 'PUBLISHED' && row.approvalStatus === 'APPROVED'" type="success">{{ t('content.approvalStatus.approved') }}</el-tag>
+            <el-tag v-else type="info">{{ t('content.approvalStatus.none') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="authorName" label="作者" width="100" />
-        <el-table-column prop="viewCount" label="浏览量" width="100" />
-        <el-table-column label="置顶/推荐" width="100">
+        <el-table-column prop="authorName" :label="t('content.fields.authorName')" width="100" />
+        <el-table-column prop="viewCount" :label="t('content.fields.viewCount')" width="100" />
+        <el-table-column :label="t('content.fields.isTop') + '/' + t('content.fields.isFeatured')" width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.isTop" type="danger" size="small">置顶</el-tag>
-            <el-tag v-if="row.isFeatured" type="warning" size="small">推荐</el-tag>
+            <el-tag v-if="row.isTop" type="danger" size="small">{{ t('content.fields.isTop') }}</el-tag>
+            <el-tag v-if="row.isFeatured" type="warning" size="small">{{ t('content.fields.isFeatured') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
-        <el-table-column label="操作" width="450" fixed="right">
+        <el-table-column prop="createdAt" :label="t('content.fields.createdAt')" width="180" />
+        <el-table-column :label="t('common.button.actions')" width="450" fixed="right">
           <template #default="{ row }">
             <!-- 编辑按钮 - 只有非发布状态才能编辑 -->
             <el-button
@@ -74,9 +74,9 @@
               size="small"
               @click="handleEdit(row)"
               :disabled="row.status === 'PUBLISHED'"
-              :title="row.status === 'PUBLISHED' ? '已发布的内容需要先下线才能编辑' : '编辑内容'"
+              :title="row.status === 'PUBLISHED' ? t('content.message.cannotEditPublished') : t('content.edit')"
             >
-              编辑
+              {{ t('common.button.edit') }}
             </el-button>
 
             <!-- 管理员：直接发布按钮 - 草稿状态 -->
@@ -86,7 +86,7 @@
               size="small"
               @click="handlePublish(row)"
             >
-              发布
+              {{ t('common.button.publish') }}
             </el-button>
 
             <!-- 非管理员：提交审批按钮 - 草稿状态且未提交审批 -->
@@ -96,7 +96,7 @@
               size="small"
               @click="handleSubmitApproval(row)"
             >
-              提交审批
+              {{ t('workflow.submitApproval') }}
             </el-button>
 
             <!-- 非管理员：撤回审批按钮 - 审批中 -->
@@ -106,7 +106,7 @@
               size="small"
               @click="handleWithdrawApproval(row)"
             >
-              撤回审批
+              {{ t('workflow.withdrawApproval') }}
             </el-button>
 
             <!-- 非管理员：发布按钮 - 草稿状态且审批通过 -->
@@ -116,7 +116,7 @@
               size="small"
               @click="handlePublish(row)"
             >
-              发布
+              {{ t('common.button.publish') }}
             </el-button>
 
             <!-- 审批员：审批按钮 - 审批中状态 -->
@@ -126,7 +126,7 @@
               size="small"
               @click="handleApprove(row)"
             >
-              审批
+              {{ t('workflow.approve') }}
             </el-button>
 
             <!-- 下线按钮 - 已发布状态 -->
@@ -136,7 +136,7 @@
               size="small"
               @click="handleUnpublish(row)"
             >
-              下线
+              {{ t('common.button.unpublish') }}
             </el-button>
 
             <!-- 删除按钮 - 非发布状态才能删除 -->
@@ -145,9 +145,19 @@
               size="small"
               @click="handleDelete(row)"
               :disabled="row.status === 'PUBLISHED'"
-              :title="row.status === 'PUBLISHED' ? '已发布的内容需要先下线才能删除' : '删除内容'"
+              :title="row.status === 'PUBLISHED' ? t('content.message.cannotEditPublished') : t('content.delete')"
             >
-              删除
+              {{ t('common.button.delete') }}
+            </el-button>
+            
+            <!-- 版本历史按钮：打开当前内容的版本抽屉 -->
+            <el-button
+              type="info"
+              size="small"
+              @click="openVersions(row)"
+              :title="t('content.version.actions.viewHistory')"
+            >
+              {{ t('content.version.history') }}
             </el-button>
           </template>
         </el-table-column>
@@ -180,8 +190,8 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="所属站点" prop="siteId">
-          <el-select v-model="formData.siteId" placeholder="请选择站点" :disabled="isEdit">
+        <el-form-item :label="t('site.fields.name')" prop="siteId">
+          <el-select v-model="formData.siteId" :placeholder="t('site.placeholder.selectSite')" :disabled="isEdit">
             <el-option
               v-for="site in siteList"
               :key="site.id"
@@ -191,41 +201,41 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="标题" prop="title">
-          <el-input v-model="formData.title" placeholder="请输入标题" />
+        <el-form-item :label="t('content.fields.title')" prop="title">
+          <el-input v-model="formData.title" :placeholder="t('content.placeholder.title')" />
         </el-form-item>
 
-        <el-form-item label="URL别名" prop="slug">
+        <el-form-item :label="t('content.fields.slug')" prop="slug">
           <el-input
             v-model="formData.slug"
-            placeholder="请输入URL别名(小写字母、数字、连字符)"
+            :placeholder="t('content.placeholder.slug')"
           />
         </el-form-item>
 
-        <el-form-item label="摘要">
+        <el-form-item :label="t('content.fields.excerpt')">
           <el-input
             v-model="formData.summary"
             type="textarea"
             :rows="3"
-            placeholder="请输入摘要"
+            :placeholder="t('content.placeholder.excerpt')"
           />
         </el-form-item>
 
-        <el-form-item label="内容">
-          <RichTextEditor v-model="formData.content" height="400px" placeholder="请输入内容..." />
+        <el-form-item :label="t('content.fields.content')">
+          <RichTextEditor v-model="formData.content" height="400px" :placeholder="t('content.placeholder.content')" />
         </el-form-item>
 
-        <el-form-item label="内容类型">
-          <el-select v-model="formData.contentType" placeholder="请选择内容类型">
-            <el-option label="文章" value="ARTICLE" />
-            <el-option label="页面" value="PAGE" />
-            <el-option label="新闻" value="NEWS" />
-            <el-option label="产品" value="PRODUCT" />
-            <el-option label="自定义" value="CUSTOM" />
+        <el-form-item :label="t('content.fields.contentType')">
+          <el-select v-model="formData.contentType" :placeholder="t('content.placeholder.selectContentType')">
+            <el-option :label="t('content.contentTypes.article')" value="ARTICLE" />
+            <el-option :label="t('content.contentTypes.page')" value="PAGE" />
+            <el-option :label="t('content.contentTypes.news')" value="NEWS" />
+            <el-option :label="t('content.contentTypes.product')" value="PRODUCT" />
+            <el-option :label="t('content.contentTypes.custom')" value="CUSTOM" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="封面图">
+        <el-form-item :label="t('content.fields.coverImage')">
           <el-upload
             class="cover-uploader"
             :action="uploadUrl"
@@ -237,27 +247,27 @@
             <img v-if="formData.coverImage" :src="formData.coverImage" class="cover-image" />
             <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
           </el-upload>
-          <div class="upload-tip">建议尺寸: 800x450px, 支持jpg/png格式, 大小不超过2MB</div>
+          <div class="upload-tip">{{ t('content.uploadTip') }}</div>
         </el-form-item>
 
-        <el-form-item label="状态">
+        <el-form-item :label="t('content.fields.status')">
           <el-radio-group v-model="formData.status">
-            <el-radio label="DRAFT">草稿</el-radio>
-            <el-radio label="PENDING">待审核</el-radio>
-            <el-radio label="PUBLISHED">已发布</el-radio>
+            <el-radio label="DRAFT">{{ t('content.status.draft') }}</el-radio>
+            <el-radio label="PENDING">{{ t('content.status.pending') }}</el-radio>
+            <el-radio label="PUBLISHED">{{ t('content.status.published') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="内容属性">
-          <el-checkbox v-model="formData.isTop">置顶</el-checkbox>
-          <el-checkbox v-model="formData.isFeatured">推荐</el-checkbox>
-          <el-checkbox v-model="formData.isOriginal">原创</el-checkbox>
+        <el-form-item :label="t('content.fields.attributes')">
+          <el-checkbox v-model="formData.isTop">{{ t('content.fields.isTop') }}</el-checkbox>
+          <el-checkbox v-model="formData.isFeatured">{{ t('content.fields.isFeatured') }}</el-checkbox>
+          <el-checkbox v-model="formData.isOriginal">{{ t('content.fields.isOriginal') }}</el-checkbox>
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ t('common.button.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit">{{ t('common.button.confirm') }}</el-button>
       </template>
     </el-dialog>
 
@@ -276,6 +286,75 @@
       :content-title="currentContent?.title || ''"
       @success="handleApproveSuccess"
     />
+
+    <!-- 版本历史组件 -->
+    <VersionHistory
+      v-model="versionsDrawerVisible"
+      :content="currentContent"
+    />
+
+
+
+    <!-- 版本详情对话框：展示单个版本的关键字段 -->
+    <el-dialog v-model="versionDetailVisible" :title="t('content.version.dialog.versionDetail')" width="700px">
+      <el-descriptions :column="2" border>
+        <el-descriptions-item :label="t('content.version.fields.versionNumber')">{{ versionDetail?.versionNumber }}</el-descriptions-item>
+        <el-descriptions-item :label="t('content.fields.title')">{{ versionDetail?.title }}</el-descriptions-item>
+        <el-descriptions-item :label="t('content.version.fields.changeType')">{{ versionDetail?.changeType || '-' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('content.version.fields.changeSummary')" :span="2">{{ versionDetail?.changeSummary || '-' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('content.version.fields.createdBy')">{{ versionDetail?.createdByName || versionDetail?.createdBy || '-' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('content.version.fields.createdAt')">{{ versionDetail?.createdAt || '-' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('content.version.fields.tagName')" :span="2">{{ versionDetail?.isTagged ? (versionDetail?.tagName || t('content.version.tagged')) : '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <div class="mt-12">
+        <div class="sub-title">{{ t('content.fields.content') }}{{ t('common.message.preview') }}</div>
+        <el-input type="textarea" :rows="10" v-model="versionDetailContentPreview" readonly />
+      </div>
+      <template #footer>
+        <el-button @click="versionDetailVisible = false">{{ t('common.button.close') }}</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 版本对比对话框：展示两版本的差异与关键字段 -->
+    <el-dialog v-model="compareDialogVisible" :title="t('content.version.dialog.versionCompare')" width="800px">
+      <div class="compare-meta">
+        <div class="compare-block">
+          <div class="sub-title">{{ t('content.version.dialog.versionA', { version: compareVersionA?.versionNumber }) }}</div>
+          <el-descriptions :column="1" border>
+            <el-descriptions-item :label="t('content.fields.title')">{{ compareVersionA?.title }}</el-descriptions-item>
+            <el-descriptions-item :label="t('content.version.fields.changeSummary')">{{ compareVersionA?.changeSummary || '-' }}</el-descriptions-item>
+            <el-descriptions-item :label="t('content.version.fields.createdBy')">{{ compareVersionA?.createdByName || '-' }}</el-descriptions-item>
+            <el-descriptions-item :label="t('content.version.fields.createdAt')">{{ compareVersionA?.createdAt || '-' }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
+        <div class="compare-block">
+          <div class="sub-title">{{ t('content.version.dialog.versionB', { version: compareVersionB?.versionNumber }) }}</div>
+          <el-descriptions :column="1" border>
+            <el-descriptions-item :label="t('content.fields.title')">{{ compareVersionB?.title }}</el-descriptions-item>
+            <el-descriptions-item :label="t('content.version.fields.changeSummary')">{{ compareVersionB?.changeSummary || '-' }}</el-descriptions-item>
+            <el-descriptions-item :label="t('content.version.fields.createdBy')">{{ compareVersionB?.createdByName || '-' }}</el-descriptions-item>
+            <el-descriptions-item :label="t('content.version.fields.createdAt')">{{ compareVersionB?.createdAt || '-' }}</el-descriptions-item>
+          </el-descriptions>
+        </div>
+      </div>
+      <div class="mt-12">
+        <div class="sub-title">{{ t('content.version.diffFields') }}</div>
+        <div v-if="compareDifferences && Object.keys(compareDifferences).length" class="diff-list">
+          <el-tag
+            v-for="(changed, field) in compareDifferences"
+            :key="field"
+            :type="changed ? 'danger' : 'info'"
+            class="mr-8 mb-8"
+          >
+            {{ field }}：{{ changed ? t('content.version.changed') : t('content.version.unchanged') }}
+          </el-tag>
+        </div>
+        <div v-else class="text-muted">{{ t('content.version.noDifferences') }}</div>
+      </div>
+      <template #footer>
+        <el-button @click="compareDialogVisible = false">{{ t('common.button.close') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -283,6 +362,7 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import {
   getContentsApi,
   createContentApi,
@@ -291,15 +371,26 @@ import {
   updateContentStatusApi,
   submitApprovalApi,
   withdrawApprovalApi,
-  type Content
+  type Content,
+  // 版本相关API与类型
+  getVersionListApi,
+  getVersionApi,
+  restoreVersionApi,
+  compareVersionsApi,
+  getVersionStatisticsApi,
+  tagVersionApi,
+  deleteVersionApi,
+  type ContentVersionDTO
 } from '@/api/content'
 import { getAllSitesApi, type Site } from '@/api/site'
 import { useUserStore } from '@/store/user'
 import RichTextEditor from '@/components/RichTextEditor.vue'
 import SubmitApprovalDialog from '@/components/SubmitApprovalDialog.vue'
 import ApproveContentDialog from '@/components/ApproveContentDialog.vue'
+import VersionHistory from '@/components/VersionHistory.vue'
 
 const userStore = useUserStore()
+const { t } = useI18n()
 
 // 上传配置
 const uploadUrl = import.meta.env.VITE_API_BASE_URL + '/files/upload'
@@ -324,6 +415,11 @@ const submitApprovalDialogVisible = ref(false)
 const approveDialogVisible = ref(false)
 const currentContent = ref<Content | null>(null)
 
+// 版本控制相关
+const versionsDrawerVisible = ref(false)
+const versionDetailVisible = ref(false)
+const compareDialogVisible = ref(false)
+
 // 表单数据
 const formData = reactive<Content>({
   siteId: 0,
@@ -341,16 +437,16 @@ const formData = reactive<Content>({
 // 表单验证规则
 const formRules: FormRules = {
   siteId: [
-    { required: true, message: '请选择站点', trigger: 'change' }
+    { required: true, message: t('site.validation.siteRequired'), trigger: 'change' }
   ],
   title: [
-    { required: true, message: '请输入标题', trigger: 'blur' },
-    { max: 200, message: '标题长度不能超过200', trigger: 'blur' }
+    { required: true, message: t('content.validation.titleRequired'), trigger: 'blur' },
+    { max: 200, message: t('content.validation.titleLength'), trigger: 'blur' }
   ],
   slug: [
-    { required: true, message: '请输入URL别名', trigger: 'blur' },
-    { max: 200, message: 'URL别名长度不能超过200', trigger: 'blur' },
-    { pattern: /^[a-z0-9-]+$/, message: 'URL别名只能包含小写字母、数字和连字符', trigger: 'blur' }
+    { required: true, message: t('content.validation.slugRequired'), trigger: 'blur' },
+    { max: 200, message: t('content.validation.slugLength'), trigger: 'blur' },
+    { pattern: /^[a-z0-9-]+$/, message: t('content.validation.slugPattern'), trigger: 'blur' }
   ]
 }
 
@@ -442,9 +538,9 @@ const resetForm = () => {
 const handleCoverSuccess = (response: any) => {
   if (response.code === 200) {
     formData.coverImage = response.data.url
-    ElMessage.success('封面上传成功')
+    ElMessage.success(t('content.message.uploadSuccess'))
   } else {
-    ElMessage.error(response.message || '封面上传失败')
+    ElMessage.error(response.message || t('content.message.uploadFailed'))
   }
 }
 
@@ -454,11 +550,11 @@ const beforeCoverUpload = (file: File) => {
   const isLt2M = file.size / 1024 / 1024 < 2
 
   if (!isImage) {
-    ElMessage.error('封面图只能是 JPG/PNG 格式!')
+    ElMessage.error(t('content.message.uploadFormatError'))
     return false
   }
   if (!isLt2M) {
-    ElMessage.error('封面图大小不能超过 2MB!')
+    ElMessage.error(t('content.message.uploadSizeError'))
     return false
   }
   return true
@@ -467,7 +563,7 @@ const beforeCoverUpload = (file: File) => {
 // 新增内容
 const handleAdd = () => {
   isEdit.value = false
-  dialogTitle.value = '新增内容'
+  dialogTitle.value = t('content.add')
   resetForm()
   // 设置当前用户为作者
   if (userStore.userInfo) {
@@ -480,7 +576,7 @@ const handleAdd = () => {
 // 编辑内容
 const handleEdit = (row: Content) => {
   isEdit.value = true
-  dialogTitle.value = '编辑内容'
+  dialogTitle.value = t('content.edit')
   Object.assign(formData, row)
   dialogVisible.value = true
 }
@@ -637,6 +733,23 @@ const handleSizeChange = (val: number) => {
 const handleCurrentChange = (val: number) => {
   currentPage.value = val - 1  // Element Plus从1开始，转换为从0开始
   loadContents()
+}
+
+// 版本控制相关方法
+const openVersions = (row: Content) => {
+  console.log('打开版本历史:', row)
+  currentContent.value = row
+  versionsDrawerVisible.value = true
+}
+
+const openVersionDetail = (version: any) => {
+  console.log('查看版本详情:', version)
+  versionDetailVisible.value = true
+}
+
+const openCompareDialog = (version1: any, version2: any) => {
+  console.log('比较版本:', version1, version2)
+  compareDialogVisible.value = true
 }
 
 // 组件挂载时加载数据

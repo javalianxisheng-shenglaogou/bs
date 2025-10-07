@@ -3,24 +3,24 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>用户列表</span>
+          <span>{{ t('user.list') }}</span>
           <div>
             <el-select
               v-model="selectedStatus"
-              placeholder="状态"
+              :placeholder="t('user.placeholder.selectStatus')"
               style="width: 120px; margin-right: 10px"
               clearable
               @change="handleSearch"
             >
-              <el-option label="全部状态" value="" />
-              <el-option label="正常" value="ACTIVE" />
-              <el-option label="停用" value="INACTIVE" />
-              <el-option label="锁定" value="LOCKED" />
-              <el-option label="待激活" value="PENDING" />
+              <el-option :label="t('user.status.all')" value="" />
+              <el-option :label="t('user.status.active')" value="ACTIVE" />
+              <el-option :label="t('user.status.inactive')" value="INACTIVE" />
+              <el-option :label="t('user.status.locked')" value="LOCKED" />
+              <el-option :label="t('user.status.pending')" value="PENDING" />
             </el-select>
             <el-input
               v-model="searchText"
-              placeholder="搜索用户名或邮箱"
+              :placeholder="t('user.placeholder.searchKeyword')"
               style="width: 200px; margin-right: 10px"
               clearable
               @clear="handleSearch"
@@ -30,7 +30,7 @@
                 <el-icon><Search /></el-icon>
               </template>
             </el-input>
-            <el-button @click="handleSearch">搜索</el-button>
+            <el-button @click="handleSearch">{{ t('user.search') }}</el-button>
             <el-button
               v-permission="'user:create'"
               type="primary"
@@ -38,7 +38,7 @@
               style="margin-left: 10px"
             >
               <el-icon><Plus /></el-icon>
-              新增用户
+              {{ t('user.add') }}
             </el-button>
           </div>
         </div>
@@ -47,7 +47,7 @@
       <!-- 用户表格 -->
       <el-table :data="userList" border stripe v-loading="loading" class="user-table">
         <el-table-column prop="id" label="ID" width="80" align="center" />
-        <el-table-column label="用户信息" width="280">
+        <el-table-column :label="t('user.info')" width="280">
           <template #default="{ row }">
             <div class="user-info-cell">
               <el-avatar :size="40" class="user-avatar">
@@ -60,7 +60,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="email" label="邮箱" width="220">
+        <el-table-column prop="email" :label="t('user.fields.email')" width="220">
           <template #default="{ row }">
             <div class="email-cell">
               <el-icon><Message /></el-icon>
@@ -68,7 +68,7 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="mobile" label="手机号" width="150">
+        <el-table-column prop="mobile" :label="t('user.fields.mobile')" width="150">
           <template #default="{ row }">
             <div class="mobile-cell">
               <el-icon><Phone /></el-icon>
@@ -76,15 +76,15 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column :label="t('user.fields.status')" width="100" align="center">
           <template #default="{ row }">
-            <el-tag v-if="row.status === 'ACTIVE'" type="success" effect="dark">正常</el-tag>
-            <el-tag v-else-if="row.status === 'LOCKED'" type="danger" effect="dark">锁定</el-tag>
-            <el-tag v-else-if="row.status === 'INACTIVE'" type="info" effect="dark">停用</el-tag>
-            <el-tag v-else type="warning" effect="dark">待激活</el-tag>
+            <el-tag v-if="row.status === 'ACTIVE'" type="success" effect="dark">{{ t('user.status.active') }}</el-tag>
+            <el-tag v-else-if="row.status === 'LOCKED'" type="danger" effect="dark">{{ t('user.status.locked') }}</el-tag>
+            <el-tag v-else-if="row.status === 'INACTIVE'" type="info" effect="dark">{{ t('user.status.inactive') }}</el-tag>
+            <el-tag v-else type="warning" effect="dark">{{ t('user.status.pending') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="角色" width="180">
+        <el-table-column :label="t('user.fields.roles')" width="180">
           <template #default="{ row }">
             <div class="roles-cell">
               <el-tag
@@ -100,27 +100,31 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right" align="center">
+        <el-table-column prop="createdAt" :label="t('user.fields.createdAt')" width="180" />
+        <el-table-column :label="t('user.operation')" width="220" fixed="right" align="center">
           <template #default="{ row }">
-            <el-button
-              v-permission="'user:update'"
-              type="primary"
-              size="small"
-              @click="handleEdit(row)"
-              :icon="Edit"
-            >
-              编辑
-            </el-button>
-            <el-button
-              v-permission="'user:delete'"
-              type="danger"
-              size="small"
-              @click="handleDelete(row)"
-              :icon="Delete"
-            >
-              删除
-            </el-button>
+            <div class="action-buttons">
+              <el-button
+                v-permission="'user:update'"
+                type="primary"
+                size="small"
+                @click="handleEdit(row)"
+                :icon="Edit"
+                class="action-btn"
+              >
+                {{ t('user.edit') }}
+              </el-button>
+              <el-button
+                v-permission="'user:delete'"
+                type="danger"
+                size="small"
+                @click="handleDelete(row)"
+                :icon="Delete"
+                class="action-btn"
+              >
+                {{ t('user.delete') }}
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -153,8 +157,11 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, Edit, Delete, Message, Phone } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { getUserList, deleteUser, getUserById, type User } from '@/api/user'
 import UserDialog from '@/components/UserDialog.vue'
+
+const { t } = useI18n()
 
 // 响应式数据
 const loading = ref(false)
@@ -172,13 +179,7 @@ const currentUserData = ref<any>()
 
 // 获取角色名称
 const getRoleName = (roleCode: string) => {
-  const roleMap: Record<string, string> = {
-    'SUPER_ADMIN': '超级管理员',
-    'SITE_ADMIN': '站点管理员',
-    'EDITOR': '编辑者',
-    'VIEWER': '查看者'
-  }
-  return roleMap[roleCode] || roleCode
+  return t(`user.roles.${roleCode}`) || roleCode
 }
 
 // 获取角色标签类型
@@ -208,8 +209,8 @@ const loadUsers = async () => {
       status: selectedStatus.value,
       page: currentPage.value,
       size: pageSize.value,
-      sortBy: 'createdAt',
-      sortOrder: 'DESC'
+      sortBy: 'id',
+      sortOrder: 'ASC'
     })
 
     console.log('✅ 用户列表响应:', response)
@@ -225,13 +226,13 @@ const loadUsers = async () => {
       console.error('❌ 响应code不是200:', response)
       userList.value = []
       total.value = 0
-      ElMessage.error(response.message || '加载用户列表失败')
+      ElMessage.error(response.message || t('user.message.loadFailed'))
     }
   } catch (error: any) {
     console.error('❌ 加载用户列表失败:', error)
     userList.value = []
     total.value = 0
-    ElMessage.error(error.message || '加载用户列表失败')
+    ElMessage.error(error.message || t('user.message.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -259,11 +260,11 @@ const handleEdit = async (row: User) => {
       currentUserData.value = response.data
       dialogVisible.value = true
     } else {
-      ElMessage.error(response.message || '获取用户信息失败')
+      ElMessage.error(response.message || t('user.message.getUserInfoFailed'))
     }
   } catch (error: any) {
     console.error('获取用户信息失败:', error)
-    ElMessage.error(error.message || '获取用户信息失败')
+    ElMessage.error(error.message || t('user.message.getUserInfoFailed'))
   }
 }
 
@@ -276,26 +277,26 @@ const handleDialogSuccess = () => {
 const handleDelete = async (row: User) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除用户 "${row.username}" 吗？`,
-      '警告',
+      t('user.message.deleteConfirm', { username: row.username }),
+      t('common.warning'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('user.buttons.confirm'),
+        cancelButtonText: t('user.buttons.cancel'),
         type: 'warning',
       }
     )
 
     const response = await deleteUser(row.id)
     if (response.code === 200) {
-      ElMessage.success('删除成功')
+      ElMessage.success(t('user.message.deleteSuccess'))
       loadUsers()
     } else {
-      ElMessage.error(response.message || '删除失败')
+      ElMessage.error(response.message || t('user.message.deleteFailed'))
     }
   } catch (error: any) {
     if (error !== 'cancel') {
       console.error('删除用户失败:', error)
-      ElMessage.error(error.message || '删除失败')
+      ElMessage.error(error.message || t('user.message.deleteFailed'))
     }
   }
 }
@@ -446,6 +447,35 @@ onMounted(() => {
 .role-tag {
   font-weight: 500;
   border-radius: 4px;
+}
+
+/* 操作按钮优化 */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-btn {
+  padding: 5px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn .el-icon {
+  margin-right: 4px;
+}
+
+/* 确保按钮文本不换行 */
+.action-btn span {
+  white-space: nowrap;
 }
 </style>
 

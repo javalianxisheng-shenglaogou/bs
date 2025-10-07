@@ -22,7 +22,7 @@
               <el-icon class="menu-icon">
                 <component :is="route.meta?.icon" />
               </el-icon>
-              <span class="menu-title">{{ route.meta?.title }}</span>
+              <span class="menu-title">{{ getMenuTitle(route.name as string) }}</span>
             </el-menu-item>
           </template>
         </el-menu>
@@ -95,10 +95,12 @@ import { useUserStore } from '@/store/user'
 import { ArrowDown, OfficeBuilding, User, SwitchButton } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const activeMenu = computed(() => route.path)
 const pageTitle = computed(() => route.meta.title as string || '')
@@ -133,10 +135,28 @@ const menuRoutes = computed(() => {
   })
 })
 
+// 菜单标题国际化映射
+const getMenuTitle = (routeName: string) => {
+  const menuTitleMap: Record<string, string> = {
+    'Dashboard': t('menu.dashboard'),
+    'Users': t('menu.user'),
+    'Sites': t('menu.site'),
+    'Contents': t('menu.content'),
+    'Categories': t('menu.category'),
+    'Workflows': t('menu.workflow'),
+    'WorkflowInstances': t('menu.workflowConfig'),
+    'WorkflowTasks': t('menu.myTasks'),
+    'Logs': t('menu.logs'),
+    'Profile': t('common.app.profile')
+  }
+
+  return menuTitleMap[routeName] || routeName
+}
+
 const handleCommand = async (command: string) => {
   if (command === 'logout') {
     await userStore.logout()
-    ElMessage.success('退出成功')
+    ElMessage.success(t('common.message.logoutSuccess'))
     await router.push('/login')
   } else if (command === 'profile') {
     router.push('/profile')

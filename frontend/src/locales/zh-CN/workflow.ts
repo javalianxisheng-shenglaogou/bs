@@ -9,6 +9,8 @@ export default {
   taskDetail: '任务详情',
   approve: '审批',
   reject: '驳回',
+  submitApproval: '提交审批',
+  withdrawApproval: '撤回审批',
   
   fields: {
     id: 'ID',

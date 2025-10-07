@@ -3,15 +3,15 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>分类管理</span>
-          <el-button type="primary" @click="handleAdd">新增分类</el-button>
+          <span>{{ t('category.title') }}</span>
+          <el-button type="primary" @click="handleAdd">{{ t('category.add') }}</el-button>
         </div>
       </template>
 
       <!-- 筛选条件 -->
       <el-form :inline="true" class="filter-form">
-        <el-form-item label="站点">
-          <el-select v-model="selectedSite" placeholder="请选择站点" clearable style="width: 200px">
+        <el-form-item :label="t('site.title')">
+          <el-select v-model="selectedSite" :placeholder="t('category.placeholder.selectSite')" clearable style="width: 200px">
             <el-option
               v-for="site in siteList"
               :key="site.id"
@@ -21,7 +21,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="loadCategoryTree">查询</el-button>
+          <el-button type="primary" @click="loadCategoryTree">{{ t('category.query') }}</el-button>
         </el-form-item>
       </el-form>
 
@@ -34,7 +34,7 @@
         border
         style="width: 100%"
       >
-        <el-table-column prop="name" label="分类名称" width="250">
+        <el-table-column prop="name" :label="t('category.fields.name')" width="250">
           <template #default="{ row }">
             <div style="display: flex; align-items: center; gap: 8px;">
               <el-image
@@ -50,33 +50,33 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="code" label="分类编码" width="150" />
-        <el-table-column prop="sortOrder" label="排序" width="80" align="center" />
-        <el-table-column prop="level" label="层级" width="80" align="center">
+        <el-table-column prop="code" :label="t('category.fields.code')" width="150" />
+        <el-table-column prop="sortOrder" :label="t('category.fields.sortOrder')" width="80" align="center" />
+        <el-table-column prop="level" :label="t('category.fields.level')" width="80" align="center">
           <template #default="{ row }">
             <el-tag size="small">L{{ row.level }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="isVisible" label="可见性" width="100" align="center">
+        <el-table-column prop="isVisible" :label="t('category.fields.isVisible')" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="row.isVisible ? 'success' : 'danger'" size="small">
-              {{ row.isVisible ? '可见' : '隐藏' }}
+              {{ row.isVisible ? t('category.status.visible') : t('category.status.hidden') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip />
-        <el-table-column label="创建时间" width="160">
+        <el-table-column prop="description" :label="t('category.fields.description')" min-width="150" show-overflow-tooltip />
+        <el-table-column :label="t('category.fields.createdAt')" width="160">
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right">
+        <el-table-column :label="t('common.operation')" width="320" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleAddChild(row)" link>
-              <el-icon><Plus /></el-icon> 子分类
+              <el-icon><Plus /></el-icon> {{ t('category.actions.addChild') }}
             </el-button>
             <el-button type="primary" size="small" @click="handleEdit(row)" link>
-              <el-icon><Edit /></el-icon> 编辑
+              <el-icon><Edit /></el-icon> {{ t('category.actions.edit') }}
             </el-button>
             <el-button
               :type="row.isVisible ? 'warning' : 'success'"
@@ -85,10 +85,10 @@
               link
             >
               <el-icon><View v-if="!row.isVisible" /><Hide v-else /></el-icon>
-              {{ row.isVisible ? '隐藏' : '显示' }}
+              {{ row.isVisible ? t('category.actions.hide') : t('category.actions.show') }}
             </el-button>
             <el-button type="danger" size="small" @click="handleDelete(row)" link>
-              <el-icon><Delete /></el-icon> 删除
+              <el-icon><Delete /></el-icon> {{ t('category.actions.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -110,9 +110,9 @@
       >
         <el-tabs v-model="activeTab">
           <!-- 基本信息 -->
-          <el-tab-pane label="基本信息" name="basic">
-            <el-form-item label="站点" prop="siteId">
-              <el-select v-model="formData.siteId" placeholder="请选择站点" :disabled="isEdit" style="width: 100%;">
+          <el-tab-pane :label="t('category.tabs.basic')" name="basic">
+            <el-form-item :label="t('site.title')" prop="siteId">
+              <el-select v-model="formData.siteId" :placeholder="t('category.placeholder.selectSite')" :disabled="isEdit" style="width: 100%;">
                 <el-option
                   v-for="site in siteList"
                   :key="site.id"
@@ -122,12 +122,12 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="父分类" prop="parentId">
+            <el-form-item :label="t('category.fields.parentId')" prop="parentId">
               <el-tree-select
                 v-model="formData.parentId"
                 :data="categoryTreeOptions"
                 :props="{ label: 'name', value: 'id' }"
-                placeholder="请选择父分类(不选则为顶级分类)"
+                :placeholder="t('category.placeholder.selectParent')"
                 clearable
                 check-strictly
                 :disabled="isEdit"
@@ -135,36 +135,36 @@
               />
             </el-form-item>
 
-            <el-form-item label="分类名称" prop="name">
-              <el-input v-model="formData.name" placeholder="请输入分类名称" />
+            <el-form-item :label="t('category.fields.name')" prop="name">
+              <el-input v-model="formData.name" :placeholder="t('category.placeholder.name')" />
             </el-form-item>
 
-            <el-form-item label="分类编码" prop="code">
-              <el-input v-model="formData.code" placeholder="请输入分类编码(英文字母、数字、下划线)" />
+            <el-form-item :label="t('category.fields.code')" prop="code">
+              <el-input v-model="formData.code" :placeholder="t('category.placeholder.code')" />
             </el-form-item>
 
-            <el-form-item label="描述">
+            <el-form-item :label="t('category.fields.description')">
               <el-input
                 v-model="formData.description"
                 type="textarea"
                 :rows="3"
-                placeholder="请输入分类描述"
+                :placeholder="t('category.placeholder.description')"
               />
             </el-form-item>
 
-            <el-form-item label="排序">
+            <el-form-item :label="t('category.fields.sortOrder')">
               <el-input-number v-model="formData.sortOrder" :min="0" :max="9999" />
-              <span style="margin-left: 10px; color: #909399; font-size: 12px;">数字越小越靠前</span>
+              <span style="margin-left: 10px; color: #909399; font-size: 12px;">{{ t('category.tips.sortOrder') }}</span>
             </el-form-item>
 
-            <el-form-item label="是否可见">
+            <el-form-item :label="t('category.fields.isVisible')">
               <el-switch v-model="formData.isVisible" />
             </el-form-item>
           </el-tab-pane>
 
           <!-- 图片设置 -->
-          <el-tab-pane label="图片设置" name="images">
-            <el-form-item label="分类图标">
+          <el-tab-pane :label="t('category.tabs.images')" name="images">
+            <el-form-item :label="t('category.fields.iconUrl')">
               <el-upload
                 class="icon-uploader"
                 :action="uploadUrl"
@@ -177,14 +177,14 @@
                 <el-icon v-else class="icon-uploader-icon"><Plus /></el-icon>
               </el-upload>
               <div style="color: #909399; font-size: 12px; margin-top: 8px;">
-                建议尺寸: 64x64px, 支持jpg/png格式, 大小不超过2MB
+                {{ t('category.tips.iconSize') }}
               </div>
               <el-button v-if="formData.iconUrl" size="small" type="danger" @click="formData.iconUrl = ''" style="margin-top: 8px;">
-                删除图标
+                {{ t('category.tips.deleteIcon') }}
               </el-button>
             </el-form-item>
 
-            <el-form-item label="封面图">
+            <el-form-item :label="t('category.fields.coverUrl')">
               <el-upload
                 class="cover-uploader"
                 :action="uploadUrl"
@@ -197,30 +197,30 @@
                 <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
               </el-upload>
               <div style="color: #909399; font-size: 12px; margin-top: 8px;">
-                建议尺寸: 800x450px, 支持jpg/png格式, 大小不超过2MB
+                {{ t('category.tips.coverSize') }}
               </div>
               <el-button v-if="formData.coverUrl" size="small" type="danger" @click="formData.coverUrl = ''" style="margin-top: 8px;">
-                删除封面
+                {{ t('category.tips.deleteCover') }}
               </el-button>
             </el-form-item>
           </el-tab-pane>
 
           <!-- SEO设置 -->
-          <el-tab-pane label="SEO设置" name="seo">
-            <el-form-item label="SEO标题">
-              <el-input v-model="formData.seoTitle" placeholder="请输入SEO标题(不填则使用分类名称)" maxlength="100" show-word-limit />
+          <el-tab-pane :label="t('category.tabs.seo')" name="seo">
+            <el-form-item :label="t('category.fields.seoTitle')">
+              <el-input v-model="formData.seoTitle" :placeholder="t('category.placeholder.seoTitle')" maxlength="100" show-word-limit />
             </el-form-item>
 
-            <el-form-item label="SEO关键词">
-              <el-input v-model="formData.seoKeywords" placeholder="请输入SEO关键词,多个关键词用逗号分隔" maxlength="200" show-word-limit />
+            <el-form-item :label="t('category.fields.seoKeywords')">
+              <el-input v-model="formData.seoKeywords" :placeholder="t('category.placeholder.seoKeywords')" maxlength="200" show-word-limit />
             </el-form-item>
 
-            <el-form-item label="SEO描述">
+            <el-form-item :label="t('category.fields.seoDescription')">
               <el-input
                 v-model="formData.seoDescription"
                 type="textarea"
                 :rows="4"
-                placeholder="请输入SEO描述"
+                :placeholder="t('category.placeholder.seoDescription')"
                 maxlength="300"
                 show-word-limit
               />
@@ -230,8 +230,8 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ t('common.button.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">{{ t('common.button.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -241,6 +241,7 @@
 import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules, UploadProps } from 'element-plus'
 import { Plus, Edit, Delete, View, Hide, Folder } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import {
   getCategoryTreeApi,
   createCategoryApi,
@@ -252,6 +253,7 @@ import {
 import { getAllSitesApi, type Site } from '@/api/site'
 import { useUserStore } from '@/store/user'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 
 // 响应式数据
@@ -261,7 +263,7 @@ const selectedSite = ref<number | undefined>(undefined)
 const categoryTree = ref<Category[]>([])
 const categoryTreeOptions = ref<Category[]>([])
 const dialogVisible = ref(false)
-const dialogTitle = ref('新增分类')
+const dialogTitle = computed(() => isEdit.value ? t('category.edit') : t('category.add'))
 const formRef = ref<FormInstance>()
 const isEdit = ref(false)
 const siteList = ref<Site[]>([])
@@ -289,20 +291,20 @@ const formData = reactive<Category>({
 })
 
 // 表单验证规则
-const formRules: FormRules = {
+const formRules = computed<FormRules>(() => ({
   siteId: [
-    { required: true, message: '请选择站点', trigger: 'change' }
+    { required: true, message: t('category.validation.siteRequired'), trigger: 'change' }
   ],
   name: [
-    { required: true, message: '请输入分类名称', trigger: 'blur' },
-    { max: 100, message: '分类名称长度不能超过100', trigger: 'blur' }
+    { required: true, message: t('category.validation.nameRequired'), trigger: 'blur' },
+    { max: 100, message: t('category.validation.nameMaxLength'), trigger: 'blur' }
   ],
   code: [
-    { required: true, message: '请输入分类编码', trigger: 'blur' },
-    { max: 50, message: '分类编码长度不能超过50', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9_]+$/, message: '分类编码只能包含字母、数字和下划线', trigger: 'blur' }
+    { required: true, message: t('category.validation.codeRequired'), trigger: 'blur' },
+    { max: 50, message: t('category.validation.codeMaxLength'), trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_]+$/, message: t('category.validation.codePattern'), trigger: 'blur' }
   ]
-}
+}))
 
 // 加载站点列表
 const loadSites = async () => {
@@ -316,19 +318,19 @@ const loadSites = async () => {
       }
     } else {
       siteList.value = []
-      ElMessage.error(response.message || '加载站点列表失败')
+      ElMessage.error(response.message || t('category.message.loadSitesFailed'))
     }
   } catch (error: any) {
     console.error('❌ 加载站点列表失败:', error)
     siteList.value = []
-    ElMessage.error(error.message || '加载站点列表失败')
+    ElMessage.error(error.message || t('category.message.loadSitesFailed'))
   }
 }
 
 // 加载分类树
 const loadCategoryTree = async () => {
   if (!selectedSite.value) {
-    ElMessage.warning('请先选择站点')
+    ElMessage.warning(t('category.message.selectSiteFirst'))
     return
   }
 
@@ -346,13 +348,13 @@ const loadCategoryTree = async () => {
     } else {
       categoryTree.value = []
       categoryTreeOptions.value = []
-      ElMessage.error(response.message || '加载分类树失败')
+      ElMessage.error(response.message || t('category.message.loadTreeFailed'))
     }
   } catch (error: any) {
     console.error('❌ 加载分类树失败:', error)
     categoryTree.value = []
     categoryTreeOptions.value = []
-    ElMessage.error(error.message || '加载分类树失败')
+    ElMessage.error(error.message || t('category.message.loadTreeFailed'))
   } finally {
     loading.value = false
   }
@@ -384,11 +386,11 @@ const beforeUpload: UploadProps['beforeUpload'] = (file) => {
   const isLt2M = file.size / 1024 / 1024 < 2
 
   if (!isImage) {
-    ElMessage.error('只能上传 JPG/PNG 格式的图片!')
+    ElMessage.error(t('category.message.onlyJpgPng'))
     return false
   }
   if (!isLt2M) {
-    ElMessage.error('图片大小不能超过 2MB!')
+    ElMessage.error(t('category.message.sizeTooLarge'))
     return false
   }
   return true
@@ -398,9 +400,9 @@ const beforeUpload: UploadProps['beforeUpload'] = (file) => {
 const handleIconSuccess: UploadProps['onSuccess'] = (response) => {
   if (response.code === 200) {
     formData.iconUrl = response.data.url
-    ElMessage.success('图标上传成功')
+    ElMessage.success(t('category.message.iconUploadSuccess'))
   } else {
-    ElMessage.error(response.message || '图标上传失败')
+    ElMessage.error(response.message || t('category.message.uploadFailed'))
   }
 }
 
@@ -408,9 +410,9 @@ const handleIconSuccess: UploadProps['onSuccess'] = (response) => {
 const handleCoverSuccess: UploadProps['onSuccess'] = (response) => {
   if (response.code === 200) {
     formData.coverUrl = response.data.url
-    ElMessage.success('封面上传成功')
+    ElMessage.success(t('category.message.coverUploadSuccess'))
   } else {
-    ElMessage.error(response.message || '封面上传失败')
+    ElMessage.error(response.message || t('category.message.uploadFailed'))
   }
 }
 
@@ -435,11 +437,10 @@ const resetForm = () => {
 // 新增分类
 const handleAdd = () => {
   if (!selectedSite.value) {
-    ElMessage.warning('请先选择站点')
+    ElMessage.warning(t('category.message.selectSiteFirst'))
     return
   }
   isEdit.value = false
-  dialogTitle.value = '新增分类'
   resetForm()
   dialogVisible.value = true
 }
@@ -447,7 +448,6 @@ const handleAdd = () => {
 // 添加子分类
 const handleAddChild = (row: Category) => {
   isEdit.value = false
-  dialogTitle.value = '新增子分类'
   resetForm()
   formData.parentId = row.id
   dialogVisible.value = true
@@ -456,7 +456,6 @@ const handleAddChild = (row: Category) => {
 // 编辑分类
 const handleEdit = (row: Category) => {
   isEdit.value = true
-  dialogTitle.value = '编辑分类'
   Object.assign(formData, row)
   dialogVisible.value = true
 }
@@ -466,11 +465,11 @@ const handleToggleVisibility = async (row: Category) => {
   try {
     const newVisibility = !row.isVisible
     await updateCategoryVisibilityApi(row.id!, newVisibility)
-    ElMessage.success('更新成功')
+    ElMessage.success(t('category.message.updateSuccess'))
     loadCategoryTree()
   } catch (error: any) {
     console.error('更新可见性失败:', error)
-    ElMessage.error(error.message || '更新可见性失败')
+    ElMessage.error(error.message || t('category.message.saveFailed'))
   }
 }
 
@@ -478,22 +477,22 @@ const handleToggleVisibility = async (row: Category) => {
 const handleDelete = async (row: Category) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除分类"${row.name}"吗?`,
-      '提示',
+      t('category.message.deleteConfirm', { name: row.name }),
+      t('common.warning'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.button.confirm'),
+        cancelButtonText: t('common.button.cancel'),
         type: 'warning'
       }
     )
 
     await deleteCategoryApi(row.id!)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('category.message.deleteSuccess'))
     loadCategoryTree()
   } catch (error: any) {
     if (error !== 'cancel') {
       console.error('删除分类失败:', error)
-      ElMessage.error(error.message || '删除分类失败')
+      ElMessage.error(error.message || t('category.message.deleteFailed'))
     }
   }
 }
@@ -506,16 +505,16 @@ const handleSubmit = () => {
       try {
         if (isEdit.value) {
           await updateCategoryApi(formData.id!, formData)
-          ElMessage.success('更新成功')
+          ElMessage.success(t('category.message.updateSuccess'))
         } else {
           await createCategoryApi(formData)
-          ElMessage.success('创建成功')
+          ElMessage.success(t('category.message.createSuccess'))
         }
         dialogVisible.value = false
         loadCategoryTree()
       } catch (error: any) {
         console.error('保存分类失败:', error)
-        ElMessage.error(error.message || '保存分类失败')
+        ElMessage.error(error.message || t('category.message.saveFailed'))
       } finally {
         submitLoading.value = false
       }

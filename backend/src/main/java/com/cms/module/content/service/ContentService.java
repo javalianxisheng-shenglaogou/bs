@@ -34,6 +34,7 @@ public class ContentService {
 
     private final ContentRepository contentRepository;
     private final org.springframework.context.ApplicationContext applicationContext;
+    private ContentVersionService versionService; // 延迟注入避免循环依赖
 
     /**
      * 创建内容
@@ -57,6 +58,14 @@ public class ContentService {
 
         Content saved = contentRepository.save(content);
         log.info("内容创建成功: id={}", saved.getId());
+
+        // 创建初始版本快照
+        try {
+            getVersionService().createVersion(saved.getId(), "CREATE", "创建内容");
+            log.info("✅ 创建初始版本成功: contentId={}", saved.getId());
+        } catch (Exception e) {
+            log.warn("⚠️ 创建初始版本失败: contentId={}, error={}", saved.getId(), e.getMessage());
+        }
 
         return convertToDTO(saved);
     }
@@ -88,7 +97,7 @@ public class ContentService {
         BeanUtils.copyProperties(contentDTO, content, "id", "createdAt", "createdBy");
 
         // 如果从非发布状态变为发布状态，设置发布时间
-        if (!"PUBLISHED".equals(oldStatus) && "PUBLISHED".equals(content.getStatus()) 
+        if (!"PUBLISHED".equals(oldStatus) && "PUBLISHED".equals(content.getStatus())
                 && content.getPublishedAt() == null) {
             content.setPublishedAt(LocalDateTime.now());
         }
@@ -96,7 +105,25 @@ public class ContentService {
         Content updated = contentRepository.save(content);
         log.info("内容更新成功: id={}", updated.getId());
 
+        // 创建版本快照
+        try {
+            getVersionService().createVersion(id, "UPDATE", "更新内容");
+            log.info("✅ 创建更新版本成功: contentId={}", id);
+        } catch (Exception e) {
+            log.warn("⚠️ 创建版本快照失败: contentId={}, error={}", id, e.getMessage());
+        }
+
         return convertToDTO(updated);
+    }
+
+    /**
+     * 获取版本服务（延迟注入避免循环依赖）
+     */
+    private ContentVersionService getVersionService() {
+        if (versionService == null) {
+            versionService = applicationContext.getBean(ContentVersionService.class);
+        }
+        return versionService;
     }
 
     /**
@@ -260,6 +287,22 @@ public class ContentService {
 
         contentRepository.save(content);
         log.info("内容状态更新成功: id={}, status={}", id, status);
+
+        // 在状态变更后创建版本快照，记录发布/下线/其它状态变更
+        try {
+            if (!"PUBLISHED".equals(oldStatus) && "PUBLISHED".equals(status)) {
+                // 发布内容：记录发布版本
+                getVersionService().createVersion(id, "PUBLISH", "发布内容");
+            } else if ("PUBLISHED".equals(oldStatus) && "DRAFT".equals(status)) {
+                // 下线内容：记录下线版本
+                getVersionService().createVersion(id, "UNPUBLISH", "下线内容");
+            } else {
+                // 其它状态变化：通用状态变更记录
+                getVersionService().createVersion(id, "STATUS_CHANGE", "状态变更: " + oldStatus + " -> " + status);
+            }
+        } catch (Exception e) {
+            log.warn("创建版本失败（状态变更）: id={}, error={}", id, e.getMessage());
+        }
     }
 
     /**
@@ -299,6 +342,13 @@ public class ContentService {
         contentRepository.save(content);
 
         log.info("内容审批提交成功: id={}, instanceId={}", id, instance.getId());
+
+        // 创建版本快照：记录提交审批
+        try {
+            getVersionService().createVersion(id, "APPROVAL_SUBMITTED", "提交审批");
+        } catch (Exception e) {
+            log.warn("创建版本失败（提交审批）: id={}, error={}", id, e.getMessage());
+        }
     }
 
     /**
@@ -341,6 +391,13 @@ public class ContentService {
         contentRepository.save(content);
 
         log.info("内容审批提交成功（带选项）: id={}, instanceId={}", id, instance.getId());
+
+        // 创建版本快照：记录提交审批（带选项）
+        try {
+            getVersionService().createVersion(id, "APPROVAL_SUBMITTED", "提交审批（带选项）");
+        } catch (Exception e) {
+            log.warn("创建版本失败（提交审批-带选项）: id={}, error={}", id, e.getMessage());
+        }
     }
 
     /**
@@ -371,6 +428,13 @@ public class ContentService {
         contentRepository.save(content);
 
         log.info("内容审批撤回成功: id={}", id);
+
+        // 创建版本快照：记录撤回审批
+        try {
+            getVersionService().createVersion(id, "APPROVAL_WITHDRAWN", "撤回审批");
+        } catch (Exception e) {
+            log.warn("创建版本失败（撤回审批）: id={}, error={}", id, e.getMessage());
+        }
     }
 
     /**
@@ -394,6 +458,13 @@ public class ContentService {
 
         contentRepository.save(content);
         log.info("内容自动发布成功: id={}", contentId);
+
+        // 创建版本快照：记录审批通过并自动发布
+        try {
+            getVersionService().createVersion(contentId, "APPROVAL_APPROVED", "审批通过，自动发布");
+        } catch (Exception e) {
+            log.warn("创建版本失败（审批通过）: id={}, error={}", contentId, e.getMessage());
+        }
     }
 
     /**
@@ -415,6 +486,13 @@ public class ContentService {
 
         contentRepository.save(content);
         log.info("内容返回草稿状态: id={}", contentId);
+
+        // 创建版本快照：记录审批拒绝并退回草稿
+        try {
+            getVersionService().createVersion(contentId, "APPROVAL_REJECTED", "审批拒绝: " + reason);
+        } catch (Exception e) {
+            log.warn("创建版本失败（审批拒绝）: id={}, error={}", contentId, e.getMessage());
+        }
     }
 
     /**

@@ -190,3 +190,97 @@ export const withdrawApprovalApi = (id: number) => {
   })
 }
 
+
+// 版本DTO类型定义（与后端 ContentVersionDTO 对应），用于版本相关接口的类型声明
+export interface ContentVersionDTO {
+  id: number
+  contentId: number
+  versionNumber: number
+  title: string
+  slug?: string
+  summary?: string
+  content?: string
+  coverImage?: string
+  contentType?: string
+  status?: string
+  isTop?: boolean
+  isFeatured?: boolean
+  isOriginal?: boolean
+  tags?: string
+  metadata?: string
+  changeSummary?: string
+  changeType?: string
+  createdBy?: number
+  createdByName?: string
+  createdAt?: string
+  isTagged?: boolean
+  tagName?: string
+  fileSize?: number
+}
+
+// 获取内容的版本列表（分页）
+export const getVersionListApi = (contentId: number, page = 0, size = 10) => {
+  // 调用后端 GET /contents/{contentId}/versions，返回分页的版本数据
+  return request<PageData<ContentVersionDTO>>({
+    url: `/contents/${contentId}/versions`,
+    method: 'get',
+    params: { page, size }
+  })
+}
+
+// 获取指定版本详情
+export const getVersionApi = (contentId: number, versionNumber: number) => {
+  // 调用后端 GET /contents/{contentId}/versions/{versionNumber}
+  return request<ContentVersionDTO>({
+    url: `/contents/${contentId}/versions/${versionNumber}`,
+    method: 'get'
+  })
+}
+
+// 恢复到指定版本
+export const restoreVersionApi = (contentId: number, versionNumber: number) => {
+  // 调用后端 POST /contents/{contentId}/versions/{versionNumber}/restore
+  return request({
+    url: `/contents/${contentId}/versions/${versionNumber}/restore`,
+    method: 'post'
+  })
+}
+
+// 比较两个版本差异
+export const compareVersionsApi = (contentId: number, version1: number, version2: number) => {
+  // 调用后端 GET /contents/{contentId}/versions/compare?version1=&version2=
+  return request<{ version1: ContentVersionDTO; version2: ContentVersionDTO; differences: Record<string, boolean> }>({
+    url: `/contents/${contentId}/versions/compare`,
+    method: 'get',
+    params: { version1, version2 }
+  })
+}
+
+// 获取版本统计信息
+export const getVersionStatisticsApi = (contentId: number) => {
+  // 调用后端 GET /contents/{contentId}/versions/statistics
+  return request<{ totalVersions: number; currentVersion: number }>({
+    url: `/contents/${contentId}/versions/statistics`,
+    method: 'get'
+  })
+}
+
+// 为指定版本打标签（重要版本标记）
+export const tagVersionApi = (contentId: number, versionNumber: number, tagName: string) => {
+  // 调用后端 POST /contents/{contentId}/versions/{versionNumber}/tag?tagName=
+  return request<ContentVersionDTO>({
+    url: `/contents/${contentId}/versions/${versionNumber}/tag`,
+    method: 'post',
+    params: { tagName }
+  })
+}
+
+// 删除指定版本
+export const deleteVersionApi = (contentId: number, versionNumber: number) => {
+  // 调用后端 DELETE /contents/{contentId}/versions/{versionNumber}
+  return request({
+    url: `/contents/${contentId}/versions/${versionNumber}`,
+    method: 'delete'
+  })
+}
+

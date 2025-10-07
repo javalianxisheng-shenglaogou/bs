@@ -30,7 +30,8 @@ export default {
     publish: 'Publish',
     unpublish: 'Unpublish',
     approve: 'Approve',
-    reject: 'Reject'
+    reject: 'Reject',
+    actions: 'Actions'
   },
   message: {
     success: 'Operation successful',
@@ -44,7 +45,9 @@ export default {
     deleteFailed: 'Delete failed',
     loadFailed: 'Load failed',
     noData: 'No data available',
-    networkError: 'Network error, please try again later'
+    networkError: 'Network error, please try again later',
+    preview: 'Preview (may be truncated)',
+    logoutSuccess: 'Logout successful'
   },
   status: {
     active: 'Active',
@@ -80,6 +83,10 @@ export default {
     lastWeek: 'Last Week',
     lastMonth: 'Last Month',
     custom: 'Custom'
-  }
+  },
+  warning: 'Warning',
+  error: 'Error',
+  success: 'Success',
+  info: 'Information'
 }
 

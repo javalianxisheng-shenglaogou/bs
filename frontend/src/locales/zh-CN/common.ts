@@ -30,7 +30,8 @@ export default {
     publish: '发布',
     unpublish: '撤回',
     approve: '审批',
-    reject: '驳回'
+    reject: '驳回',
+    actions: '操作'
   },
   message: {
     success: '操作成功',
@@ -44,7 +45,9 @@ export default {
     deleteFailed: '删除失败',
     loadFailed: '加载失败',
     noData: '暂无数据',
-    networkError: '网络错误，请稍后重试'
+    networkError: '网络错误，请稍后重试',
+    preview: '预览（可能截断）',
+    logoutSuccess: '退出成功'
   },
   status: {
     active: '正常',
@@ -80,6 +83,10 @@ export default {
     lastWeek: '最近一周',
     lastMonth: '最近一个月',
     custom: '自定义'
-  }
+  },
+  warning: '警告',
+  error: '错误',
+  success: '成功',
+  info: '信息'
 }
 

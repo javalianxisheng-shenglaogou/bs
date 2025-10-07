@@ -28,6 +28,7 @@ export default {
   },
   
   status: {
+    all: '全部状态',
     active: '正常',
     inactive: '停用',
     locked: '锁定',
@@ -43,7 +44,7 @@ export default {
     email: '请输入邮箱',
     mobile: '请输入手机号',
     searchKeyword: '搜索用户名或邮箱',
-    selectStatus: '选择状态',
+    selectStatus: '状态',
     selectRole: '选择角色'
   },
   
@@ -64,13 +65,28 @@ export default {
     addFailed: '用户添加失败',
     updateSuccess: '用户更新成功',
     updateFailed: '用户更新失败',
-    deleteSuccess: '用户删除成功',
-    deleteFailed: '用户删除失败',
+    deleteSuccess: '删除成功',
+    deleteFailed: '删除失败',
     deleteConfirm: '确定要删除用户 "{username}" 吗？',
-    loadFailed: '加载用户列表失败'
+    loadFailed: '加载用户列表失败',
+    getUserInfoFailed: '获取用户信息失败'
   },
-  
+
   info: '用户信息',
-  operation: '操作'
+  operation: '操作',
+  search: '搜索',
+  table: '用户表格',
+  pagination: '分页',
+  dialog: '用户对话框',
+  roles: {
+    SUPER_ADMIN: '超级管理员',
+    SITE_ADMIN: '站点管理员',
+    EDITOR: '编辑者',
+    VIEWER: '查看者'
+  },
+  buttons: {
+    confirm: '确定',
+    cancel: '取消'
+  }
 }
 

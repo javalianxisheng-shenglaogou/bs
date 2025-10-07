@@ -28,6 +28,7 @@ export default {
   },
   
   status: {
+    all: 'All Status',
     active: 'Active',
     inactive: 'Inactive',
     locked: 'Locked',
@@ -43,7 +44,7 @@ export default {
     email: 'Enter email',
     mobile: 'Enter mobile number',
     searchKeyword: 'Search username or email',
-    selectStatus: 'Select status',
+    selectStatus: 'Status',
     selectRole: 'Select role'
   },
   
@@ -64,13 +65,28 @@ export default {
     addFailed: 'Failed to add user',
     updateSuccess: 'User updated successfully',
     updateFailed: 'Failed to update user',
-    deleteSuccess: 'User deleted successfully',
-    deleteFailed: 'Failed to delete user',
+    deleteSuccess: 'Deleted successfully',
+    deleteFailed: 'Delete failed',
     deleteConfirm: 'Are you sure you want to delete user "{username}"?',
-    loadFailed: 'Failed to load user list'
+    loadFailed: 'Failed to load user list',
+    getUserInfoFailed: 'Failed to get user information'
   },
-  
+
   info: 'User Information',
-  operation: 'Operation'
+  operation: 'Operation',
+  search: 'Search',
+  table: 'User Table',
+  pagination: 'Pagination',
+  dialog: 'User Dialog',
+  roles: {
+    SUPER_ADMIN: 'Super Admin',
+    SITE_ADMIN: 'Site Admin',
+    EDITOR: 'Editor',
+    VIEWER: 'Viewer'
+  },
+  buttons: {
+    confirm: 'Confirm',
+    cancel: 'Cancel'
+  }
 }
 

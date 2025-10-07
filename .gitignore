@@ -37,6 +37,9 @@ dist-ssr/
 .env.local
 .env.*.local
 
+# Backend configuration with sensitive data
+backend/src/main/resources/application-dev.yml
+
 # OS
 .DS_Store
 Thumbs.db
@@ -60,6 +63,32 @@ out/
 *.tmp
 *.temp
 .cache/
+
+# Test files
+test_*.ps1
+test_*.html
+test-*.html
+test-*.ps1
+*_test.html
+*_test.ps1
+final_test*.html
+problem_*.html
+DELETE_LIST.md
+
+# Temporary markdown files
+*_optimization.md
+*_strategy.md
+*_summary.md
+FIXES_SUMMARY.md
+
+# Temporary JSON files
+login.json
+
+# Backend temporary files
+backend/*.log
+backend/*.sql
+backend/logs/
+backend/uploads/
 
 # Package files
 *.tgz

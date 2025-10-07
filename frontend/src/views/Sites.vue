@@ -3,10 +3,10 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>站点列表</span>
+          <span>{{ t('site.list') }}</span>
           <el-button type="primary" @click="handleAdd">
             <el-icon><Plus /></el-icon>
-            新增站点
+            {{ t('site.add') }}
           </el-button>
         </div>
       </template>
@@ -19,7 +19,7 @@
               <div class="site-header">
                 <span class="site-name">{{ site.name }}</span>
                 <el-tag :type="site.status === 'ACTIVE' ? 'success' : 'info'" size="small">
-                  {{ site.status === 'ACTIVE' ? '运行中' : '已停用' }}
+                  {{ t(`site.status.${site.status}`) }}
                 </el-tag>
               </div>
             </template>
@@ -27,18 +27,18 @@
               <div class="site-logo" v-if="site.logoUrl">
                 <img :src="site.logoUrl" alt="Logo" />
               </div>
-              <p><strong>站点代码：</strong>{{ site.code }}</p>
-              <p><strong>域名：</strong><a :href="`http://${site.domain}`" target="_blank">{{ site.domain }}</a></p>
-              <p><strong>描述：</strong>{{ site.description || '暂无描述' }}</p>
-              <p><strong>语言/时区：</strong>{{ site.language }} / {{ site.timezone }}</p>
-              <p v-if="site.isDefault"><el-tag type="warning" size="small">默认站点</el-tag></p>
-              <p><strong>创建时间：</strong>{{ formatDate(site.createdAt) }}</p>
+              <p><strong>{{ t('site.fields.code') }}：</strong>{{ site.code }}</p>
+              <p><strong>{{ t('site.fields.domain') }}：</strong><a :href="`http://${site.domain}`" target="_blank">{{ site.domain }}</a></p>
+              <p><strong>{{ t('site.fields.description') }}：</strong>{{ site.description || t('site.noDescription') }}</p>
+              <p><strong>{{ t('site.fields.language') }}/{{ t('site.fields.timezone') }}：</strong>{{ site.language }} / {{ site.timezone }}</p>
+              <p v-if="site.isDefault"><el-tag type="warning" size="small">{{ t('site.defaultSite') }}</el-tag></p>
+              <p><strong>{{ t('site.fields.createdAt') }}：</strong>{{ formatDate(site.createdAt) }}</p>
             </div>
             <template #footer>
               <div class="site-actions">
-                <el-button type="primary" size="small" @click="handleEdit(site)">编辑</el-button>
-                <el-button type="success" size="small" @click="handleConfig(site)">配置</el-button>
-                <el-button type="danger" size="small" @click="handleDelete(site)">删除</el-button>
+                <el-button type="primary" size="small" @click="handleEdit(site)">{{ t('site.edit') }}</el-button>
+                <el-button type="success" size="small" @click="handleConfig(site)">{{ t('site.config') }}</el-button>
+                <el-button type="danger" size="small" @click="handleDelete(site)">{{ t('site.delete') }}</el-button>
               </div>
             </template>
           </el-card>
@@ -46,7 +46,7 @@
       </el-row>
 
       <!-- 空状态 -->
-      <el-empty v-if="!loading && siteList.length === 0" description="暂无站点数据" />
+      <el-empty v-if="!loading && siteList.length === 0" :description="t('site.empty')" />
     </el-card>
 
     <!-- 新增/编辑对话框 -->
@@ -62,41 +62,41 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="站点名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入站点名称" />
+        <el-form-item :label="t('site.fields.name')" prop="name">
+          <el-input v-model="formData.name" :placeholder="t('site.placeholder.name')" />
         </el-form-item>
 
-        <el-form-item label="站点代码" prop="code">
+        <el-form-item :label="t('site.fields.code')" prop="code">
           <el-input
             v-model="formData.code"
-            placeholder="请输入站点代码(小写字母、数字、下划线、连字符)"
+            :placeholder="t('site.placeholder.code')"
             :disabled="isEdit"
           />
         </el-form-item>
 
-        <el-form-item label="站点域名" prop="domain">
-          <el-input v-model="formData.domain" placeholder="请输入站点域名" />
+        <el-form-item :label="t('site.fields.domain')" prop="domain">
+          <el-input v-model="formData.domain" :placeholder="t('site.placeholder.domain')" />
         </el-form-item>
 
-        <el-form-item label="站点描述">
+        <el-form-item :label="t('site.fields.description')">
           <el-input
             v-model="formData.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入站点描述"
+            :placeholder="t('site.placeholder.description')"
           />
         </el-form-item>
 
-        <el-form-item label="默认语言">
-          <el-select v-model="formData.language" placeholder="请选择默认语言">
-            <el-option label="简体中文" value="zh_CN" />
-            <el-option label="English" value="en_US" />
-            <el-option label="繁體中文" value="zh_TW" />
+        <el-form-item :label="t('site.fields.language')">
+          <el-select v-model="formData.language" :placeholder="t('site.placeholder.selectLanguage')">
+            <el-option :label="t('site.languages.zh_CN')" value="zh_CN" />
+            <el-option :label="t('site.languages.en_US')" value="en_US" />
+            <el-option :label="t('site.languages.zh_TW')" value="zh_TW" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="时区">
-          <el-select v-model="formData.timezone" placeholder="请选择时区">
+        <el-form-item :label="t('site.fields.timezone')">
+          <el-select v-model="formData.timezone" :placeholder="t('site.placeholder.selectTimezone')">
             <el-option label="Asia/Shanghai" value="Asia/Shanghai" />
             <el-option label="Asia/Hong_Kong" value="Asia/Hong_Kong" />
             <el-option label="America/New_York" value="America/New_York" />
@@ -104,68 +104,68 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="站点状态">
+        <el-form-item :label="t('site.fields.status')">
           <el-radio-group v-model="formData.status">
-            <el-radio label="ACTIVE">运行中</el-radio>
-            <el-radio label="INACTIVE">已停用</el-radio>
+            <el-radio label="ACTIVE">{{ t('site.status.ACTIVE') }}</el-radio>
+            <el-radio label="INACTIVE">{{ t('site.status.INACTIVE') }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
-        <el-form-item label="默认站点">
+        <el-form-item :label="t('site.fields.isDefault')">
           <el-switch v-model="formData.isDefault" />
         </el-form-item>
 
-        <el-divider content-position="left">SEO设置</el-divider>
+        <el-divider content-position="left">{{ t('site.seoSettings') }}</el-divider>
 
-        <el-form-item label="SEO标题">
-          <el-input v-model="formData.seoTitle" placeholder="请输入SEO标题" />
+        <el-form-item :label="t('site.fields.seoTitle')">
+          <el-input v-model="formData.seoTitle" :placeholder="t('site.placeholder.seoTitle')" />
         </el-form-item>
 
-        <el-form-item label="SEO关键词">
-          <el-input v-model="formData.seoKeywords" placeholder="请输入SEO关键词,多个用逗号分隔" />
+        <el-form-item :label="t('site.fields.seoKeywords')">
+          <el-input v-model="formData.seoKeywords" :placeholder="t('site.placeholder.seoKeywords')" />
         </el-form-item>
 
-        <el-form-item label="SEO描述">
+        <el-form-item :label="t('site.fields.seoDescription')">
           <el-input
             v-model="formData.seoDescription"
             type="textarea"
             :rows="3"
-            placeholder="请输入SEO描述"
+            :placeholder="t('site.placeholder.seoDescription')"
           />
         </el-form-item>
 
-        <el-divider content-position="left">联系信息</el-divider>
+        <el-divider content-position="left">{{ t('site.contactInfo') }}</el-divider>
 
-        <el-form-item label="联系邮箱">
-          <el-input v-model="formData.contactEmail" placeholder="请输入联系邮箱" />
+        <el-form-item :label="t('site.fields.contactEmail')">
+          <el-input v-model="formData.contactEmail" :placeholder="t('site.placeholder.contactEmail')" />
         </el-form-item>
 
-        <el-form-item label="联系电话">
-          <el-input v-model="formData.contactPhone" placeholder="请输入联系电话" />
+        <el-form-item :label="t('site.fields.contactPhone')">
+          <el-input v-model="formData.contactPhone" :placeholder="t('site.placeholder.contactPhone')" />
         </el-form-item>
 
-        <el-form-item label="联系地址">
-          <el-input v-model="formData.contactAddress" placeholder="请输入联系地址" />
+        <el-form-item :label="t('site.fields.contactAddress')">
+          <el-input v-model="formData.contactAddress" :placeholder="t('site.placeholder.contactAddress')" />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSubmit">{{ t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 站点配置对话框 -->
     <el-dialog
       v-model="configDialogVisible"
-      title="站点配置"
+      :title="t('site.siteConfig')"
       width="800px"
       :close-on-click-modal="false"
     >
       <el-tabs v-model="activeTab">
-        <el-tab-pane label="基本配置" name="basic">
+        <el-tab-pane :label="t('site.basicConfig')" name="basic">
           <el-form label-width="120px">
-            <el-form-item label="Logo">
+            <el-form-item :label="t('site.fields.logo')">
               <el-upload
                 class="logo-uploader"
                 action="/api/files/upload"
@@ -193,33 +193,33 @@
           </el-form>
         </el-tab-pane>
 
-        <el-tab-pane label="主题配置" name="theme">
+        <el-tab-pane :label="t('site.themeConfig')" name="theme">
           <el-form label-width="120px">
-            <el-form-item label="主题色">
+            <el-form-item :label="t('site.primaryColor')">
               <el-color-picker v-model="themeConfig.primaryColor" />
             </el-form-item>
-            <el-form-item label="辅助色">
+            <el-form-item :label="t('site.secondaryColor')">
               <el-color-picker v-model="themeConfig.secondaryColor" />
             </el-form-item>
           </el-form>
         </el-tab-pane>
 
-        <el-tab-pane label="高级配置" name="advanced">
+        <el-tab-pane :label="t('site.advancedConfig')" name="advanced">
           <el-form label-width="120px">
-            <el-form-item label="自定义CSS">
+            <el-form-item :label="t('site.customCss')">
               <el-input
                 v-model="advancedConfig.customCss"
                 type="textarea"
                 :rows="10"
-                placeholder="请输入自定义CSS代码"
+                :placeholder="t('site.placeholder.customCss')"
               />
             </el-form-item>
-            <el-form-item label="自定义JS">
+            <el-form-item :label="t('site.customJs')">
               <el-input
                 v-model="advancedConfig.customJs"
                 type="textarea"
                 :rows="10"
-                placeholder="请输入自定义JavaScript代码"
+                :placeholder="t('site.placeholder.customJs')"
               />
             </el-form-item>
           </el-form>
@@ -227,8 +227,8 @@
       </el-tabs>
 
       <template #footer>
-        <el-button @click="configDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSaveConfig">保存配置</el-button>
+        <el-button @click="configDialogVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleSaveConfig">{{ t('site.saveConfig') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -238,6 +238,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import {
   getAllSitesApi,
   createSiteApi,
@@ -246,11 +247,13 @@ import {
   type Site
 } from '@/api/site'
 
+const { t } = useI18n()
+
 // 响应式数据
 const loading = ref(false)
 const siteList = ref<Site[]>([])
 const dialogVisible = ref(false)
-const dialogTitle = ref('新增站点')
+const dialogTitle = ref('')
 const formRef = ref<FormInstance>()
 const isEdit = ref(false)
 
@@ -269,17 +272,17 @@ const formData = reactive<Site>({
 // 表单验证规则
 const formRules: FormRules = {
   name: [
-    { required: true, message: '请输入站点名称', trigger: 'blur' },
-    { max: 100, message: '站点名称长度不能超过100', trigger: 'blur' }
+    { required: true, message: () => t('site.validation.nameRequired'), trigger: 'blur' },
+    { max: 100, message: () => t('site.validation.nameMaxLength'), trigger: 'blur' }
   ],
   code: [
-    { required: true, message: '请输入站点代码', trigger: 'blur' },
-    { max: 50, message: '站点代码长度不能超过50', trigger: 'blur' },
-    { pattern: /^[a-z0-9_-]+$/, message: '站点代码只能包含小写字母、数字、下划线和连字符', trigger: 'blur' }
+    { required: true, message: () => t('site.validation.codeRequired'), trigger: 'blur' },
+    { max: 50, message: () => t('site.validation.codeMaxLength'), trigger: 'blur' },
+    { pattern: /^[a-z0-9_-]+$/, message: () => t('site.validation.codePattern'), trigger: 'blur' }
   ],
   domain: [
-    { required: true, message: '请输入站点域名', trigger: 'blur' },
-    { max: 255, message: '站点域名长度不能超过255', trigger: 'blur' }
+    { required: true, message: () => t('site.validation.domainRequired'), trigger: 'blur' },
+    { max: 255, message: () => t('site.validation.domainMaxLength'), trigger: 'blur' }
   ]
 }
 
@@ -293,12 +296,12 @@ const loadSites = async () => {
       siteList.value = Array.isArray(response.data) ? response.data : []
     } else {
       siteList.value = []
-      ElMessage.error(response.message || '加载站点列表失败')
+      ElMessage.error(response.message || t('site.message.loadFailed'))
     }
   } catch (error: any) {
     console.error('❌ 加载站点列表失败:', error)
     siteList.value = []
-    ElMessage.error(error.message || '加载站点列表失败')
+    ElMessage.error(error.message || t('site.message.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -326,7 +329,7 @@ const resetForm = () => {
 // 新增站点
 const handleAdd = () => {
   isEdit.value = false
-  dialogTitle.value = '新增站点'
+  dialogTitle.value = t('site.add')
   resetForm()
   dialogVisible.value = true
 }
@@ -334,7 +337,7 @@ const handleAdd = () => {
 // 编辑站点
 const handleEdit = (site: Site) => {
   isEdit.value = true
-  dialogTitle.value = '编辑站点'
+  dialogTitle.value = t('site.edit')
   Object.assign(formData, site)
   dialogVisible.value = true
 }
@@ -365,7 +368,7 @@ const uploadHeaders = {
 const handleLogoSuccess = (response: any) => {
   if (response.code === 200) {
     configData.logoUrl = response.data.url
-    ElMessage.success('Logo上传成功')
+    ElMessage.success(t('site.message.logoUploadSuccess'))
   }
 }
 
@@ -373,7 +376,7 @@ const handleLogoSuccess = (response: any) => {
 const handleFaviconSuccess = (response: any) => {
   if (response.code === 200) {
     configData.faviconUrl = response.data.url
-    ElMessage.success('Favicon上传成功')
+    ElMessage.success(t('site.message.faviconUploadSuccess'))
   }
 }
 
@@ -393,12 +396,12 @@ const handleSaveConfig = async () => {
       logoUrl: configData.logoUrl,
       faviconUrl: configData.faviconUrl
     } as Site)
-    ElMessage.success('配置保存成功')
+    ElMessage.success(t('site.message.configSaveSuccess'))
     configDialogVisible.value = false
     await loadSites()
   } catch (error: any) {
     console.error('保存配置失败:', error)
-    ElMessage.error(error.message || '保存配置失败')
+    ElMessage.error(error.message || t('site.message.configSaveFailed'))
   }
 }
 
@@ -406,22 +409,22 @@ const handleSaveConfig = async () => {
 const handleDelete = async (site: Site) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除站点 "${site.name}" 吗？`,
-      '警告',
+      t('site.message.deleteConfirm', { name: site.name }),
+      t('common.warning'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning',
       }
     )
 
     await deleteSiteApi(site.id!)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('site.message.deleteSuccess'))
     await loadSites()
   } catch (error: any) {
     if (error !== 'cancel') {
       console.error('删除站点失败:', error)
-      ElMessage.error(error.message || '删除站点失败')
+      ElMessage.error(error.message || t('site.message.deleteFailed'))
     }
   }
 }
@@ -435,16 +438,16 @@ const handleSubmit = async () => {
       try {
         if (isEdit.value && formData.id) {
           await updateSiteApi(formData.id, formData)
-          ElMessage.success('更新成功')
+          ElMessage.success(t('site.message.updateSuccess'))
         } else {
           await createSiteApi(formData)
-          ElMessage.success('创建成功')
+          ElMessage.success(t('site.message.createSuccess'))
         }
         dialogVisible.value = false
         await loadSites()
       } catch (error: any) {
         console.error('保存站点失败:', error)
-        ElMessage.error(error.message || '保存站点失败')
+        ElMessage.error(error.message || t('site.message.saveFailed'))
       }
     }
   })
