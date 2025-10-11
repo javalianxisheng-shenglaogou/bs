@@ -152,7 +152,15 @@ const handleLogin = async () => {
 
         if (success) {
           ElMessage.success('登录成功')
-          router.push('/')
+          // 根据用户角色跳转到不同页面
+          const userRoles = userStore.userInfo?.roles || []
+          if (userRoles.includes('GUEST') && !userRoles.includes('ADMIN')) {
+            // 访客用户跳转到访客首页
+            router.push('/guest')
+          } else {
+            // 其他用户跳转到管理后台
+            router.push('/dashboard')
+          }
         } else {
           ElMessage.error('登录失败，请检查用户名和密码')
         }

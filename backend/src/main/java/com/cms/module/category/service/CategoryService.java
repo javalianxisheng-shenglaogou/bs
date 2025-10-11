@@ -3,6 +3,7 @@ package com.cms.module.category.service;
 import com.cms.common.exception.BusinessException;
 import com.cms.module.category.dto.CategoryDTO;
 import com.cms.module.category.dto.CategoryQueryDTO;
+import com.cms.module.category.dto.CategoryTreeDTO;
 import com.cms.module.category.entity.Category;
 import com.cms.module.category.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,9 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.criteria.Predicate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -273,6 +276,49 @@ public class CategoryService {
         CategoryDTO dto = new CategoryDTO();
         BeanUtils.copyProperties(category, dto);
         return dto;
+    }
+
+    /**
+     * 获取访客端分类树（仅可见分类，不含内容统计）
+     * 注意：内容统计由PublicContentService处理
+     *
+     * @param siteId 站点ID
+     * @return 分类树DTO列表
+     */
+    public List<CategoryTreeDTO> getCategoryTreeForGuest(Long siteId) {
+        log.info("获取访客端分类树: siteId={}", siteId);
+        
+        // 获取所有可见分类
+        List<Category> categories = categoryRepository.findBySiteIdAndIsVisibleAndDeletedFalseOrderBySortOrderAsc(siteId, true);
+        
+        // 构建树形结构
+        Map<Long, CategoryTreeDTO> dtoMap = new HashMap<>();
+        for (Category category : categories) {
+            CategoryTreeDTO dto = new CategoryTreeDTO();
+            dto.setId(category.getId());
+            dto.setName(category.getName());
+            dto.setCode(category.getCode());
+            dto.setIconUrl(category.getIconUrl());
+            dto.setContentCount(0L); // 初始化为0，由调用方设置
+            dto.setChildren(new ArrayList<>());
+            dtoMap.put(category.getId(), dto);
+        }
+        
+        // 组装父子关系
+        List<CategoryTreeDTO> rootNodes = new ArrayList<>();
+        for (Category category : categories) {
+            CategoryTreeDTO dto = dtoMap.get(category.getId());
+            if (category.getParentId() == null || category.getParentId() == 0) {
+                rootNodes.add(dto);
+            } else {
+                CategoryTreeDTO parent = dtoMap.get(category.getParentId());
+                if (parent != null) {
+                    parent.getChildren().add(dto);
+                }
+            }
+        }
+        
+        return rootNodes;
     }
 }
 

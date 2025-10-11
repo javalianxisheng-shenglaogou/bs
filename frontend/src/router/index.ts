@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import { useUserStore } from '@/store/user'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -14,6 +15,40 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/Register.vue'),
     meta: { title: '注册' }
   },
+  // 访客端路由
+  {
+    path: '/guest',
+    name: 'GuestLayout',
+    component: () => import('@/layouts/GuestLayout.vue'),
+    redirect: '/guest',
+    children: [
+      {
+        path: '',
+        name: 'GuestHome',
+        component: () => import('@/views/guest/Home.vue'),
+        meta: { title: '访客首页', requiresAuth: true }
+      },
+      {
+        path: 'search',
+        name: 'GuestSearch',
+        component: () => import('@/views/guest/Search.vue'),
+        meta: { title: '搜索', requiresAuth: true }
+      },
+      {
+        path: 'content/:id',
+        name: 'GuestContentDetail',
+        component: () => import('@/views/guest/ContentDetail.vue'),
+        meta: { title: '内容详情', requiresAuth: true }
+      },
+      {
+        path: 'profile',
+        name: 'GuestProfile',
+        component: () => import('@/views/Profile.vue'),
+        meta: { title: '个人信息', requiresAuth: true }
+      }
+    ]
+  },
+  // 管理后台路由
   {
     path: '/',
     name: 'Layout',
@@ -148,18 +183,45 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const token = localStorage.getItem('token')
   const publicPages = ['/login', '/register']
-  const authRequired = !publicPages.includes(to.path)
+  const authRequired = to.meta.requiresAuth !== false && !publicPages.includes(to.path)
 
   if (authRequired && !token) {
     next('/login')
-  } else if ((to.path === '/login' || to.path === '/register') && token) {
-    next('/')
-  } else {
-    next()
+    return
   }
+
+  if ((to.path === '/login' || to.path === '/register') && token) {
+    // 登录后根据角色跳转
+    const userStore = useUserStore()
+    const userRoles = userStore.userInfo?.roles || []
+    
+    if (userRoles.includes('GUEST') && !userRoles.includes('ADMIN')) {
+      next('/guest')
+    } else {
+      next('/dashboard')
+    }
+    return
+  }
+
+  // 访客用户只能访问 /guest 路径
+  if (token) {
+    const userStore = useUserStore()
+    const userRoles = userStore.userInfo?.roles || []
+    
+    // 如果是纯访客用户（只有GUEST角色）
+    if (userRoles.includes('GUEST') && !userRoles.includes('ADMIN') && !userRoles.includes('EDITOR')) {
+      // 如果访客用户试图访问管理后台
+      if (!to.path.startsWith('/guest') && !to.path.startsWith('/profile')) {
+        next('/guest')
+        return
+      }
+    }
+  }
+
+  next()
 })
 
 export default router

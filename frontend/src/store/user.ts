@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { login as loginApi, getCurrentUser as getCurrentUserApi, logout as logoutApi, type LoginRequest, type UserInfo as ApiUserInfo } from '@/api/auth'
 
 export interface UserInfo {
@@ -44,14 +44,18 @@ export const useUserStore = defineStore('user', () => {
           roles,
           permissions
         })
-        // 登录后立即获取完整用户信息(包括头像)
-        await fetchUserInfo()
+        // 登录后尝试获取完整用户信息(包括头像)，失败也不影响登录
+        try {
+          await fetchUserInfo()
+        } catch (error) {
+          console.warn('获取完整用户信息失败，使用登录返回的基本信息:', error)
+        }
         return true
       }
       return false
     } catch (error) {
       console.error('登录失败:', error)
-      return false
+      throw error // 抛出错误以便上层处理
     }
   }
 
@@ -150,9 +154,14 @@ export const useUserStore = defineStore('user', () => {
     return hasRole('ADMIN') || hasRole('SUPER_ADMIN')
   }
 
+  // 计算属性：是否已登录
+  const isLoggedIn = computed(() => !!token.value)
+
   return {
     token,
     userInfo,
+    user: userInfo, // 兼容别名
+    isLoggedIn, // 已登录状态（计算属性）
     setToken,
     setUserInfo,
     login,

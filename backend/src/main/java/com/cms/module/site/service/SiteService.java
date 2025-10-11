@@ -315,5 +315,16 @@ public class SiteService {
         BeanUtils.copyProperties(site, dto);
         return dto;
     }
+
+    /**
+     * 获取所有活跃站点（用于访客端）
+     */
+    public List<SiteDTO> getActiveSites() {
+        log.info("获取活跃站点列表");
+        List<Site> activeSites = siteRepository.findByStatusAndDeletedFalse("ACTIVE");
+        return activeSites.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
 }
 

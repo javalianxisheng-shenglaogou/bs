@@ -80,6 +80,12 @@ DELETE_LIST.md
 *_strategy.md
 *_summary.md
 FIXES_SUMMARY.md
+# Date-stamped temporary documents
+202*-*.md
+*使用说明.md
+*快速使用*.md
+*修复说明.md
+*测试指南.md
 
 # Temporary JSON files
 login.json

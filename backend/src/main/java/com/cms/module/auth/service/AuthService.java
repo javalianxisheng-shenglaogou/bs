@@ -154,16 +154,13 @@ public class AuthService {
         user.setNickname(request.getNickname() != null ? request.getNickname() : request.getUsername());
         user.setStatus("ACTIVE"); // 新注册用户默认激活
 
-        // 分配默认角色
-        Role defaultRole = roleRepository.findByCode("USER")
-                .orElseGet(() -> roleRepository.findByCode("EDITOR")
-                        .orElse(null));
+        // 分配GUEST角色（新注册用户默认为访客）
+        Role guestRole = roleRepository.findByCode("GUEST")
+                .orElseThrow(() -> new BusinessException("访客角色不存在，请联系系统管理员"));
 
-        if (defaultRole != null) {
-            Set<Role> roles = new HashSet<>();
-            roles.add(defaultRole);
-            user.setRoles(roles);
-        }
+        Set<Role> roles = new HashSet<>();
+        roles.add(guestRole);
+        user.setRoles(roles);
 
         // 保存用户
         user = userRepository.save(user);

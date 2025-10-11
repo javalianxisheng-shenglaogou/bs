@@ -42,6 +42,7 @@ public class SecurityConfig {
                 // 允许访问的路径（白名单）
                 .antMatchers(
                         "/auth/**",              // 认证接口
+                        "/api/public/**",        // 访客公开接口
                         "/test/**",              // 测试接口
                         "/files/**",             // 静态文件访问
                         "/swagger-ui/**",        // Swagger UI
